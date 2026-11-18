@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoHealth: Peta Fasilitas Kesehatan &amp; Mitigasi Karhutla Sumatera Selatan</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script type="module" src="/js/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#panel-kontrol">Langsung ke daftar dan filter fasilitas kesehatan</a>
+
+  <header class="topbar" role="banner">
+    <div class="brand-group">
+      <h1 class="brand-title">GeoHealth</h1>
+      <p class="brand-subtitle">Peta Layanan Kesehatan Darurat Asap Karhutla Sumatera Selatan</p>
+    </div>
+
+    <nav class="topbar-actions" aria-label="Tindakan darurat dan informasi sistem">
+      <button type="button" id="btn-igd-darurat" class="btn btn-emergency">
+        Cari IGD terdekat
+      </button>
+      <button type="button" id="btn-pakai-gps" class="btn btn-primary">
+        Pakai lokasi saya
+      </button>
+      <button type="button" id="btn-buka-metodologi" class="btn btn-outline" aria-haspopup="dialog" aria-controls="dialog-info">
+        Metodologi &amp; Privasi
+      </button>
+    </nav>
+  </header>
+
+  <main class="workspace" id="main-content">
+    <aside class="control-panel" id="panel-kontrol" aria-label="Filter dan daftar fasilitas kesehatan">
+      <div class="sheet-handle-bar">
+        <button type="button" id="btn-toggle-sheet" class="sheet-toggle-btn" aria-expanded="true" aria-controls="panel-body">
+          <span class="sheet-grip" aria-hidden="true"></span>
+          <span id="sheet-toggle-label">Sembunyikan panel daftar</span>
+        </button>
+      </div>
+
+      <div id="panel-body" class="panel-body">
+        <div class="mode-tabs" role="tablist" aria-label="Mode tampilan">
+          <button type="button" role="tab" id="tab-btn-faskes" class="tab-btn active" aria-selected="true" aria-controls="pane-faskes">
+            Pencarian Faskes (<span id="badge-count-faskes">0</span>)
+          </button>
+          <button type="button" role="tab" id="tab-btn-analisis" class="tab-btn" aria-selected="false" aria-controls="pane-analisis">
+            Analisis Akses &amp; Posko
+          </button>
+        </div>
+
+        <section id="pane-faskes" role="tabpanel" aria-labelledby="tab-btn-faskes" class="tab-pane">
+          <div class="location-box" aria-live="polite">
+            <div class="location-header">
+              <span class="location-label">Titik acuan pencarian:</span>
+              <span id="teks-koordinat" class="location-coords">Palembang (-2.976, 104.752)</span>
+            </div>
+            <p class="location-hint">
+              Klik langsung di mana saja pada peta untuk memindahkan titik pencarian atau pilih lokasi cepat:
+            </p>
+            <div class="preset-row" role="group" aria-label="Lokasi uji cepat wilayah rawan karhutla">
+              <button type="button" class="chip-btn active" data-lat="-2.9760" data-lon="104.7520" data-nama="Palembang">
+                Palembang
+              </button>
+              <button type="button" class="chip-btn" data-lat="-3.3912" data-lon="104.8305" data-nama="Kayuagung (OKI)">
+                Kayuagung (OKI)
+              </button>
+              <button type="button" class="chip-btn" data-lat="-3.2718" data-lon="105.2389" data-nama="Tulung Selapan (OKI)">
+                Tulung Selapan
+              </button>
+              <button type="button" class="chip-btn" data-lat="-2.8856" data-lon="104.3924" data-nama="Pangkalan Balai (Banyuasin)">
+                Banyuasin
+              </button>
+              <button type="button" class="chip-btn" data-lat="-2.8851" data-lon="103.8342" data-nama="Sekayu (Muba)">
+                Sekayu (Muba)
+              </button>
+            </div>
+            <div id="kotak-peringatan-lokasi" class="alert-banner hidden" role="status"></div>
+            <div id="kotak-konteks-asap" class="smoke-context-strip" role="status">
+              Memeriksa titik panas di radius 5 km...
+            </div>
+          </div>
+
+          <form id="form-filter" class="filter-form" novalidate>
+            <div class="field-row">
+              <label for="input-cari" class="field-label">Cari nama faskes atau kecamatan</label>
+              <input type="search" id="input-cari" class="text-input" placeholder="Mis. RSUD Kayuagung, Tulung Selapan">
+            </div>
+
+            <div class="field-grid-2">
+              <div class="field-row">
+                <label for="select-jenis" class="field-label">Jenis fasilitas</label>
+                <select id="select-jenis" class="select-input">
+                  <option value="">Semua jenis</option>
+                  <option value="rumah_sakit">Rumah Sakit (Lingkaran)</option>
+                  <option value="puskesmas">Puskesmas (Persegi)</option>
+                  <option value="klinik">Klinik Pratama (Segitiga)</option>
+                </select>
+              </div>
+
+              <div class="field-row">
+                <label for="slider-radius" class="field-label">
+                  Jangkauan radius: <strong id="nilai-radius">35</strong> km
+                </label>
+                <input type="range" id="slider-radius" class="range-input" min="5" max="120" step="5" value="35">
+              </div>
+            </div>
+
+            <fieldset class="checkbox-fieldset">
+              <legend class="field-label">Filter kesiapan penanganan dampak asap</legend>
+              <div class="checkbox-grid">
+                <label for="chk-oksigen" class="check-label">
+                  <input type="checkbox" id="chk-oksigen">
+                  <span>Stok oksigen tersedia</span>
+                </label>
+                <label for="chk-igd" class="check-label">
+                  <input type="checkbox" id="chk-igd">
+                  <span>IGD buka 24 jam</span>
+                </label>
+                <label for="chk-dokter" class="check-label">
+                  <input type="checkbox" id="chk-dokter">
+                  <span>Dokter jaga aktif</span>
+                </label>
+                <label for="chk-tt" class="check-label">
+                  <input type="checkbox" id="chk-tt">
+                  <span>Tempat tidur tersedia (&ge; 2)</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="layer-toggle-bar" role="group" aria-label="Lapisan peta kontekstual">
+              <label for="chk-layer-hotspot" class="check-label">
+                <input type="checkbox" id="chk-layer-hotspot" checked>
+                <span>Titik panas 7 hari</span>
+              </label>
+              <label for="chk-layer-kabupaten" class="check-label">
+                <input type="checkbox" id="chk-layer-kabupaten" checked>
+                <span>Batas kabupaten</span>
+              </label>
+              <label for="chk-presisi-tinggi" class="check-label">
+                <input type="checkbox" id="chk-presisi-tinggi">
+                <span>Koordinat tepat (rute)</span>
+              </label>
+            </div>
+          </form>
+
+          <div id="status-rute-aktif" class="route-banner hidden" role="region" aria-label="Informasi rute aktif">
+            <div class="route-banner-text" id="teks-rute-aktif"></div>
+            <button type="button" id="btn-hapus-rute" class="btn btn-small btn-outline">Tutup rute</button>
+          </div>
+
+          <div id="state-loading" class="ui-state-box hidden" role="status" aria-live="polite">
+            <p class="state-title">Memuat daftar fasilitas kesehatan...</p>
+            <p class="state-desc">Menghitung jarak garis lurus (Haversine) dan menyaring ketersediaan layanan di Sumatera Selatan.</p>
+          </div>
+
+          <div id="state-error" class="ui-state-box state-error hidden" role="alert">
+            <p class="state-title">Gagal mengambil data fasilitas kesehatan</p>
+            <p class="state-desc" id="teks-error-api">Layanan backend tidak merespons. Periksa koneksi lokal Anda lalu muat ulang.</p>
+            <button type="button" id="btn-coba-lagi" class="btn btn-primary">Muat ulang data</button>
+          </div>
+
+          <div id="state-empty" class="ui-state-box hidden" role="status">
+            <p class="state-title">Tidak ada fasilitas dalam radius ini yang cocok</p>
+            <p class="state-desc">Longgarkan saringan layanan atau perbesar jangkauan radius pencarian hingga 80 km.</p>
+            <button type="button" id="btn-reset-filter" class="btn btn-outline">Reset filter &amp; perluas radius</button>
+          </div>
+
+          <ul id="daftar-faskes" class="facility-list" aria-label="Hasil fasilitas kesehatan terdekat"></ul>
+        </section>
+
+        <section id="pane-analisis" role="tabpanel" aria-labelledby="tab-btn-analisis" class="tab-pane hidden">
+          <div class="analysis-intro">
+            <h2 class="section-heading">Kandidat Prioritas Posko Kesehatan Darurat</h2>
+            <p class="analysis-desc" id="teks-metodologi-h3">
+              Menganalisis keterbatasan akses fasilitas kesehatan siap IGD &amp; oksigen terhadap kepadatan titik panas pada grid heksagonal H3 resolusi 6.
+            </p>
+            <div class="analysis-controls">
+              <label for="chk-layer-h3" class="check-label">
+                <input type="checkbox" id="chk-layer-h3" checked>
+                <span>Tampilkan grid heksagonal H3 di peta</span>
+              </label>
+            </div>
+          </div>
+
+          <h3 class="subsection-heading">Peringkat Kabupaten/Kota</h3>
+          <div class="table-scroll">
+            <table class="analysis-table" id="tabel-ranking-kab">
+              <thead>
+                <tr>
+                  <th scope="col">Wilayah</th>
+                  <th scope="col">Skor Akses Terbatas</th>
+                  <th scope="col">Jarak Faskes Siap</th>
+                  <th scope="col">Hotspot 7 Hari</th>
+                  <th scope="col">Prioritas Posko</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-ranking-kab"></tbody>
+            </table>
+          </div>
+
+          <h3 class="subsection-heading">Sel H3 Paling Kritis (Klik untuk melihat di peta)</h3>
+          <ul id="daftar-sel-h3" class="h3-cell-list" aria-label="Daftar zona heksagonal H3 dengan akses paling terbatas"></ul>
+        </section>
+      </div>
+    </aside>
+
+    <section class="map-stage" aria-label="Peta interaktif Sumatera Selatan">
+      <div id="peta-utama" class="map-canvas" tabindex="0" aria-label="Kanvas peta Leaflet Sumatera Selatan"></div>
+
+      <div class="map-legend" role="region" aria-label="Legenda simbol dan sumber data">
+        <div class="legend-title">Simbol Peta (Bentuk + Warna)</div>
+        <div class="legend-items">
+          <span class="legend-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#0F5C59" stroke="#FFFFFF" stroke-width="1.5"/><path d="M8 4.8v6.4M4.8 8h6.4" stroke="#FFFFFF" stroke-width="1.6"/></svg>
+            Rumah Sakit
+          </span>
+          <span class="legend-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2" fill="#1F6F50" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+            Puskesmas
+          </span>
+          <span class="legend-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><polygon points="8,2 14.5,13.5 1.5,13.5" fill="#3B5978" stroke="#FFFFFF" stroke-width="1.4"/></svg>
+            Klinik
+          </span>
+          <span class="legend-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="#B83A14" stroke="#FFF3EB" stroke-width="1.5"/></svg>
+            Hotspot Karhutla
+          </span>
+        </div>
+        <div class="legend-footnote" id="teks-meta-ringkas">
+          Data layanan dinamis berlabel sumber (OSM / Simulasi).
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dialog-info" class="info-dialog" aria-labelledby="judul-dialog-info">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <h2 id="judul-dialog-info" class="dialog-title">Metodologi, Transparansi Simulasi &amp; Privasi Lokasi</h2>
+        <button type="button" id="btn-tutup-dialog" class="btn btn-outline btn-small" aria-label="Tutup jendela metodologi dan privasi">
+          Tutup (Esc)
+        </button>
+      </div>
+      <div class="dialog-content">
+        <h3>1. Perhitungan Jarak dan Rute</h3>
+        <p>
+          Pencarian fasilitas kesehatan terdekat dihitung menggunakan rumus <strong>Haversine</strong> dan geodesik ellipsoid WGS84 dalam satuan meter (bukan derajat atau proyeksi Web Mercator EPSG:3857). Arah kompas dihitung memakai azimuth balik geodesik (<code>pyproj.Geod</code> / <code>ST_Azimuth</code>). Rute jalan raya disediakan sebagai fitur opsional melalui layanan publik OSRM dengan cadangan garis lurus apabila kuota layanan sedang penuh.
+        </p>
+
+        <h3>2. Transparansi Sumber Data &amp; Simulasi</h3>
+        <p>
+          Lokasi rumah sakit, puskesmas, dan klinik berasal dari data OpenStreetMap dan daftar terverifikasi Sumatera Selatan (dapat ditambah melalui impor CSV di <code>data/custom/</code>). Karena data ketersediaan tempat tidur, stok oksigen, dan dokter jaga belum terhubung ke API real-time seluruh rumah sakit, nilai kapasitas tersebut dibangkitkan dengan generator deterministik dan selalu diberi label eksplisit <strong>Data simulasi</strong> beserta waktu pembaruannya.
+        </p>
+
+        <h3>3. Batasan Data Titik Panas (Hotspot)</h3>
+        <p>
+          Titik panas satelit (VIIRS/MODIS NASA FIRMS atau sampel berlabel) merupakan indikator anomali suhu permukaan sebagai konteks risiko wilayah, bukan bukti langsung kebakaran aktif ataupun kepekatan asap di permukaan tanah.
+        </p>
+
+        <h3>4. Pelindungan Privasi Lokasi (UU PDP No. 27 Tahun 2022)</h3>
+        <ul class="dialog-list">
+          <li><strong>Minimisasi data:</strong> secara bawaan koordinat Anda dibulatkan ke 3 angka desimal (presisi sekitar 110 meter) sebelum dikirim ke server.</li>
+          <li><strong>Tanpa penyimpanan jejak:</strong> server hanya menggunakan koordinat sebagai parameter kueri sesaat, menambahkan header <code>Cache-Control: no-store</code>, dan menyensor parameter koordinat dari state log.</li>
+          <li><strong>Accuracy gating &amp; Plausibility check:</strong> sistem memberi tahu Anda bila akurasi GPS perangkat lebih buruk dari 500 meter atau bila terdeteksi loncatan lokasi tidak wajar (&gt; 140 km/jam).</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
+  <footer class="sr-only" role="contentinfo">
+    GeoHealth Sumatera Selatan. Proyek Sistem Informasi Geospasial &amp; Global Positioning System UPN Veteran Yogyakarta.
+  </footer>
+</body>
+</html>
