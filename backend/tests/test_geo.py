@@ -1,5 +1,5 @@
 import pytest
-from app.services.geo import azimuth_to_compass, geodesic_inverse, haversine_m, is_within_sumsel_bbox
+from app.services.geo import azimuth_to_compass, geodesic_inverse, haversine_m, is_within_supported_bbox
 from app.services.privacy import validate_and_cloak_location
 
 
@@ -18,8 +18,15 @@ def test_haversine_vs_geodesic_palembang_kayuagung():
 
 
 def test_bbox_validation_and_cloaking():
-    assert is_within_sumsel_bbox(-2.976, 104.752) is True
-    assert is_within_sumsel_bbox(-7.795, 110.369) is False  # Yogyakarta di luar Sumsel
+    # Titik di berbagai pulau Indonesia harus valid
+    assert is_within_supported_bbox(-2.976, 104.752) is True  # Palembang (Sumatera)
+    assert is_within_supported_bbox(-6.200, 106.816) is True  # Jakarta (Jawa)
+    assert is_within_supported_bbox(-5.147, 119.432) is True  # Makassar (Sulawesi)
+    assert is_within_supported_bbox(-2.533, 140.718) is True  # Jayapura (Papua)
+
+    # Titik di luar Indonesia harus ditolak
+    assert is_within_supported_bbox(1.352, 103.819) is False  # Singapura
+    assert is_within_supported_bbox(-12.463, 130.845) is False  # Darwin, Australia
 
     priv = validate_and_cloak_location(-2.96639, 104.74972, accuracy_m=25.0, exact=False)
     assert priv["query_lat"] == -2.966
@@ -44,4 +51,4 @@ def test_accuracy_gating_and_plausibility_check():
     assert priv_teleport["peringatan_plausibilitas"] is not None
 
     with pytest.raises(ValueError):
-        validate_and_cloak_location(-6.200, 106.816)  # Jakarta ditolak
+        validate_and_cloak_location(1.3521, 103.8198)  # Singapura di luar Indonesia ditolak

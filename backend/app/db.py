@@ -395,6 +395,7 @@ def query_nearest_faskes(
 def query_hotspots(
     days: int = 7,
     bbox: tuple[float, float, float, float] | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
     now_utc = datetime.now(timezone.utc)
     cutoff = now_utc - timedelta(days=days)
@@ -406,6 +407,10 @@ def query_hotspots(
             min_lon, min_lat, max_lon, max_lat = bbox
             clauses.append("h.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)")
             params.extend([min_lon, min_lat, max_lon, max_lat])
+        limit_clause = ""
+        if limit is not None and limit > 0:
+            limit_clause = "LIMIT %s"
+            params.append(limit)
         sql = f"""
             SELECT h.id, h.waktu_akuisisi, h.confidence, h.frp, h.satelit, h.sumber,
                    ST_Y(h.geom) AS lat, ST_X(h.geom) AS lon,
@@ -414,6 +419,7 @@ def query_hotspots(
             LEFT JOIN kabupaten k ON k.id = h.kabupaten_id
             WHERE {' AND '.join(clauses)}
             ORDER BY h.waktu_akuisisi DESC
+            {limit_clause}
         """
         with get_pg_conn() as conn:
             rows = conn.execute(sql, params).fetchall()
@@ -471,21 +477,46 @@ def query_hotspots(
             "lat": round(float(r["lat"]), 5),
             "lon": round(float(r["lon"]), 5),
         }
-        for r in filtered
+        for r in (filtered[:limit] if (limit is not None and limit > 0) else filtered)
     ]
 
 
-def query_kabupaten_geojson() -> dict[str, Any]:
+def _geom_intersects_bbox(geom_dict: dict[str, Any], bbox: tuple[float, float, float, float]) -> bool:
+    min_lon, min_lat, max_lon, max_lat = bbox
+    g_min_lon, g_min_lat, g_max_lon, g_max_lat = shape(geom_dict).bounds
+    return not (
+        g_max_lon < min_lon
+        or g_min_lon > max_lon
+        or g_max_lat < min_lat
+        or g_min_lat > max_lat
+    )
+
+
+def query_kabupaten_geojson(
+    bbox: tuple[float, float, float, float] | None = None,
+    simplify_tolerance: float = 0.005,
+) -> dict[str, Any]:
     mode = get_backend_mode()
     features = []
     if mode == "postgis":
-        sql = """
-            SELECT id, nama, kode, is_pilot, ST_AsGeoJSON(geom) AS gj
+        clauses = ["1=1"]
+        params: list[Any] = []
+        geom_expr = "ST_AsGeoJSON(geom)"
+        if simplify_tolerance > 0:
+            geom_expr = "ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, %s))"
+            params.append(simplify_tolerance)
+        if bbox:
+            min_lon, min_lat, max_lon, max_lat = bbox
+            clauses.append("geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)")
+            params.extend([min_lon, min_lat, max_lon, max_lat])
+        sql = f"""
+            SELECT id, nama, kode, is_pilot, {geom_expr} AS gj
             FROM kabupaten
+            WHERE {' AND '.join(clauses)}
             ORDER BY nama ASC
         """
         with get_pg_conn() as conn:
-            rows = conn.execute(sql).fetchall()
+            rows = conn.execute(sql, params).fetchall()
         for r in rows:
             features.append(
                 {
@@ -503,10 +534,13 @@ def query_kabupaten_geojson() -> dict[str, Any]:
         with get_sqlite_conn() as conn:
             rows = [dict(r) for r in conn.execute("SELECT id, nama, kode, is_pilot, geojson FROM kabupaten ORDER BY nama ASC").fetchall()]
         for r in rows:
+            geom_dict = json.loads(r["geojson"])
+            if bbox and not _geom_intersects_bbox(geom_dict, bbox):
+                continue
             features.append(
                 {
                     "type": "Feature",
-                    "geometry": json.loads(r["geojson"]),
+                    "geometry": geom_dict,
                     "properties": {
                         "id": int(r["id"]),
                         "nama": r["nama"],
@@ -538,7 +572,7 @@ def query_meta_summary() -> dict[str, Any]:
             max_dt = datetime.fromisoformat(last_hs["m"].replace("Z", "+00:00")) if (last_hs and last_hs["m"]) else None
 
     return {
-        "wilayah_cakupan": "Provinsi Sumatera Selatan",
+        "wilayah_cakupan": "Indonesia",
         "kabupaten_pilot": pilots,
         "total_faskes": sum(f_src.values()),
         "faskes_per_sumber": f_src,

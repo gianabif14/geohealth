@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     firms_map_key: str = ""
     osrm_url: str = "https://router.project-osrm.org"
 
-    # Sumatera Selatan bounding box dengan margin 0.3 derajat untuk daerah perbatasan
-    bbox_min_lat: float = -5.20
-    bbox_max_lat: float = -1.40
-    bbox_min_lon: float = 101.80
-    bbox_max_lon: float = 106.40
+    # Bounding box cakupan seluruh wilayah Indonesia
+    bbox_min_lat: float = -11.10
+    bbox_max_lat: float = 6.10
+    bbox_min_lon: float = 94.90
+    bbox_max_lon: float = 141.10
 
 
 settings = Settings()
