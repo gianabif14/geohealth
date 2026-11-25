@@ -18,13 +18,12 @@ def run_all_etl() -> dict:
 
         print(f"[ETL] Engine aktif          : {mode}")
         print(f"[ETL] Kabupaten/Kota dimuat : {n_kab}")
-        print(f"[ETL] Faskes OSM + acuan    : {n_faskes} (Overpass live: {n_live_osm}, CSV kustom: {n_csv})")
+        print(f"[ETL] Faskes OSM + acuan    : {n_faskes} (Overpass live: {n_live_osm}, CSV nasional: {n_csv})")
         print(f"[ETL] Status disimulasikan  : {n_sim}")
         print(f"[ETL] Hotspot dimuat        : {n_hs} (sumber: {hs_src})")
 
-        # Verifikasi sampel 10 koordinat faskes sesuai rencana mitigasi Risiko #2
         samples = query_faskes_list()[:10]
-        print("\n[Verifikasi Sampel 10 Koordinat Faskes Sumatera Selatan]")
+        print("\n[Verifikasi Sampel 10 Koordinat Faskes Indonesia]")
         for idx, s in enumerate(samples, 1):
             print(
                 f"  {idx:2d}. {s['nama']} ({s['jenis']}) -> "

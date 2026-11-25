@@ -1,10 +1,17 @@
 import argparse
 import json
+import time
+from pathlib import Path
 from typing import Any
 import httpx
 from shapely.geometry import Point, shape
+from shapely.strtree import STRtree
 from app.db import get_backend_mode, get_pg_conn, get_sqlite_conn
 from app.services.geo import haversine_m
+
+CHECKPOINT_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "cache" / "osm_overpass_checkpoint.json"
+)
 
 # Data faskes terverifikasi di Sumatera Selatan (Kemenkes/OSM acuan) untuk digabungkan dengan hasil Overpass
 VERIFIED_SUMSEL_FASKES: list[dict[str, Any]] = [
@@ -338,24 +345,64 @@ OVERPASS_ENDPOINTS = [
     "https://overpass.kumi.systems/api/interpreter",
 ]
 
+# Bounding box koridor utama 38 provinsi Indonesia (s, w, n, e) untuk loop Overpass
+PROVINCE_BBOXES: dict[str, tuple[float, float, float, float]] = {
+    "aceh": (5.45, 95.25, 5.62, 95.42),
+    "sumut": (3.48, 98.58, 3.68, 98.76),
+    "sumbar": (-1.02, 100.30, -0.85, 100.45),
+    "riau": (0.42, 101.36, 0.58, 101.52),
+    "kepri": (1.05, 103.90, 1.18, 104.10),
+    "jambi": (-1.68, 103.52, -1.54, 103.68),
+    "bengkulu": (-3.86, 102.24, -3.75, 102.35),
+    "sumsel": (-3.45, 104.65, -2.88, 104.88),
+    "babel": (-2.18, 106.06, -2.08, 106.18),
+    "lampung": (-5.46, 105.20, -5.35, 105.32),
+    "banten": (-6.22, 106.12, -6.08, 106.25),
+    "dki_jakarta": (-6.30, 106.75, -6.12, 106.92),
+    "jabar": (-6.96, 107.55, -6.85, 107.68),
+    "jateng": (-7.04, 110.36, -6.94, 110.48),
+    "diy": (-7.84, 110.33, -7.74, 110.43),
+    "jatim": (-7.34, 112.68, -7.22, 112.80),
+    "bali": (-8.72, 115.16, -8.62, 115.26),
+    "ntb": (-8.64, 116.07, -8.55, 116.17),
+    "ntt": (-10.22, 123.54, -10.12, 123.66),
+    "kalbar": (-0.12, 109.25, 0.05, 109.45),
+    "kalteng": (-2.30, 113.84, -2.12, 114.00),
+    "kalsel": (-3.48, 114.52, -3.25, 114.86),
+    "kaltim": (-0.58, 117.06, -0.42, 117.22),
+    "kaltara": (3.26, 117.54, 3.36, 117.65),
+    "sulut": (1.42, 124.78, 1.54, 124.88),
+    "gorontalo": (0.50, 123.02, 0.60, 123.12),
+    "sulteng": (-0.95, 119.82, -0.82, 119.94),
+    "sulbar": (-2.72, 118.84, -2.64, 118.94),
+    "sulsel": (-5.20, 119.38, -5.08, 119.52),
+    "sultra": (-4.06, 122.46, -3.95, 122.58),
+    "maluku": (-3.74, 128.14, -3.62, 128.24),
+    "malut": (0.74, 127.32, 0.84, 127.42),
+    "papua_barat": (-0.92, 134.00, -0.82, 134.10),
+    "papua_barat_daya": (-0.94, 131.22, -0.84, 131.34),
+    "papua": (-2.64, 140.64, -2.50, 140.76),
+    "papua_tengah": (-3.42, 135.45, -3.32, 135.56),
+    "papua_pegunungan": (-4.14, 138.90, -4.05, 139.00),
+    "papua_selatan": (-8.55, 140.35, -8.45, 140.45),
+}
 
 REGION_BBOXES: dict[str, list[tuple[float, float, float, float]]] = {
-    "sumsel": [(-3.55, 104.50, -2.80, 105.05)],
-    # Kalimantan difokuskan per kawasan kota/kabupaten agar Overpass cepat & tidak timeout
+    "sumsel": [PROVINCE_BBOXES["sumsel"]],
     "kalimantan": [
-        (-2.35, 113.80, -2.05, 114.05),  # Palangka Raya (Kalteng)
-        (-0.12, 109.25, 0.05, 109.45),   # Pontianak (Kalbar)
-        (-3.45, 114.50, -3.22, 114.88),  # Banjarmasin & Banjarbaru (Kalsel)
-        (-0.62, 117.05, -0.38, 117.28),  # Samarinda (Kaltim)
+        PROVINCE_BBOXES["kalteng"],
+        PROVINCE_BBOXES["kalbar"],
+        PROVINCE_BBOXES["kalsel"],
+        PROVINCE_BBOXES["kaltim"],
     ],
+    "indonesia": list(PROVINCE_BBOXES.values()),
 }
 
 
-def _fetch_overpass_bbox(bbox: tuple[float, float, float, float]) -> list[dict[str, Any]]:
+def _fetch_overpass_bbox(bbox: tuple[float, float, float, float], timeout_s: float = 15.0) -> list[dict[str, Any]]:
     s, w, n, e = bbox
-    # Gunakan exact tag match (bukan regex) agar indeks Overpass cepat
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
       node["amenity"="hospital"]({s},{w},{n},{e});
       way["amenity"="hospital"]({s},{w},{n},{e});
@@ -365,7 +412,7 @@ def _fetch_overpass_bbox(bbox: tuple[float, float, float, float]) -> list[dict[s
       node["healthcare"="centre"]({s},{w},{n},{e});
       way["healthcare"="centre"]({s},{w},{n},{e});
     );
-    out center 250;
+    out center 200;
     """
     elements = []
     for endpoint in OVERPASS_ENDPOINTS:
@@ -373,7 +420,7 @@ def _fetch_overpass_bbox(bbox: tuple[float, float, float, float]) -> list[dict[s
             resp = httpx.post(
                 endpoint,
                 data={"data": query},
-                timeout=25.0,
+                timeout=timeout_s,
                 headers={"User-Agent": "GeoHealth-UPNVY-GIS/1.0"},
             )
             resp.raise_for_status()
@@ -422,22 +469,73 @@ def _fetch_overpass_bbox(bbox: tuple[float, float, float, float]) -> list[dict[s
     return parsed
 
 
-def fetch_overpass_sumsel(region: str = "all") -> list[dict[str, Any]]:
-    targets = list(REGION_BBOXES.keys()) if region == "all" else [region]
+def _load_checkpoint() -> dict[str, list[dict[str, Any]]]:
+    if CHECKPOINT_PATH.exists():
+        try:
+            return json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_checkpoint(data: dict[str, list[dict[str, Any]]]) -> None:
+    CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CHECKPOINT_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def fetch_overpass_sumsel(
+    region: str = "priority",
+    rate_limit_sec: float = 0.6,
+    resume_checkpoint: bool = True,
+) -> list[dict[str, Any]]:
+    if region == "indonesia" or region == "all_38":
+        target_map = {k: [v] for k, v in PROVINCE_BBOXES.items()}
+    elif region == "all" or region == "priority":
+        target_map = {
+            "sumsel": REGION_BBOXES["sumsel"],
+            "kalimantan": REGION_BBOXES["kalimantan"],
+        }
+    elif region in PROVINCE_BBOXES:
+        target_map = {region: [PROVINCE_BBOXES[region]]}
+    else:
+        target_map = {region: REGION_BBOXES.get(region, [])}
+
+    checkpoint = _load_checkpoint() if resume_checkpoint else {}
     results: list[dict[str, Any]] = []
     seen_global: set[int] = set()
-    for reg in targets:
-        bboxes = REGION_BBOXES.get(reg, [])
-        reg_count = 0
-        for bbox in bboxes:
+
+    for reg, bboxes in target_map.items():
+        if resume_checkpoint and reg in checkpoint and checkpoint[reg]:
+            cached_items = checkpoint[reg]
+            for item in cached_items:
+                if item["osm_id"] not in seen_global:
+                    seen_global.add(item["osm_id"])
+                    results.append(item)
+            print(f"Overpass [{reg}]: {len(cached_items)} fasilitas dimuat dari checkpoint.")
+            continue
+
+        reg_items: list[dict[str, Any]] = []
+        for idx, bbox in enumerate(bboxes):
             items = _fetch_overpass_bbox(bbox)
             for item in items:
                 if item["osm_id"] not in seen_global:
                     seen_global.add(item["osm_id"])
                     results.append(item)
-                    reg_count += 1
-        print(f"Overpass [{reg}]: {reg_count} fasilitas ditemukan.")
+                reg_items.append(item)
+            if idx < len(bboxes) - 1 and rate_limit_sec > 0:
+                time.sleep(rate_limit_sec)
+
+        if reg_items:
+            checkpoint[reg] = reg_items
+            _save_checkpoint(checkpoint)
+        print(f"Overpass [{reg}]: {len(reg_items)} fasilitas ditemukan.")
+        if rate_limit_sec > 0 and len(target_map) > 2:
+            time.sleep(rate_limit_sec)
+
     return results
+
+
+_KAB_INDEX_CACHE: dict[int, tuple[STRtree, list[tuple[int, str, str]], list[tuple[int, str, Any]]]] = {}
 
 
 def _load_kabupaten_polygons() -> list[tuple[int, str, Any]]:
@@ -456,29 +554,56 @@ def _load_kabupaten_polygons() -> list[tuple[int, str, Any]]:
     return out
 
 
+def _get_kabupaten_spatial_index(
+    kabs: list[tuple[int, str, Any]]
+) -> tuple[STRtree, list[tuple[int, str, str]], list[tuple[int, str, Any]]]:
+    cache_key = id(kabs)
+    if cache_key in _KAB_INDEX_CACHE:
+        return _KAB_INDEX_CACHE[cache_key]
+    polys = [poly for _, _, poly in kabs]
+    tree = STRtree(polys)
+    sorted_names = [
+        (kid, knama, knama.lower().strip())
+        for kid, knama, _ in sorted(kabs, key=lambda x: len(x[1]), reverse=True)
+    ] + [
+        (kid, knama, knama.lower().replace("kabupaten ", "").replace("kota ", "").strip())
+        for kid, knama, _ in sorted(kabs, key=lambda x: len(x[1]), reverse=True)
+    ]
+    _KAB_INDEX_CACHE.clear()
+    _KAB_INDEX_CACHE[cache_key] = (tree, sorted_names, kabs)
+    return tree, sorted_names, kabs
+
+
 def match_kabupaten_id(
     lat: float,
     lon: float,
     kabs: list[tuple[int, str, Any]],
     text_hint: str | None = None,
 ) -> int | None:
+    if not kabs:
+        return None
+
+    tree, sorted_names, _ = _get_kabupaten_spatial_index(kabs)
+
     if text_hint:
         low_hint = text_hint.lower()
-        # Urutkan nama terpanjang lebih dulu agar "musi banyuasin" tidak tertukar dengan "banyuasin"
-        for kid, knama, _ in sorted(kabs, key=lambda x: len(x[1]), reverse=True):
-            clean_name = knama.lower().replace("kabupaten ", "").replace("kota ", "").strip()
+        for kid, _, clean_name in sorted_names:
             if clean_name and clean_name in low_hint:
                 return kid
 
     pt = Point(lon, lat)
-    for kid, _, poly in kabs:
+    cand_idxs = tree.query(pt)
+    for idx in cand_idxs:
+        kid, _, poly = kabs[int(idx)]
         if poly.contains(pt) or poly.touches(pt):
             return kid
-    # Hanya cocokkan poligon terdekat jika masih dalam toleransi ~0.25 derajat (~28 km),
-    # agar titik di luar cakupan poligon (mis. Kalimantan Barat/Timur) tidak salah dilabeli ke Sumsel.
+
+    # Gunakan STRtree buffer 0.25 derajat (~28 km) untuk mencari poligon terdekat secara cepat
+    near_idxs = tree.query(pt.buffer(0.25))
     best_id = None
     best_dist = 0.25
-    for kid, _, poly in kabs:
+    for idx in near_idxs:
+        kid, _, poly = kabs[int(idx)]
         d = poly.distance(pt)
         if d < best_dist:
             best_dist = d
@@ -487,11 +612,12 @@ def match_kabupaten_id(
 
 
 def load_osm_faskes(
-    region: str = "all",
+    region: str = "priority",
     live_only: bool = False,
     clear_sample: bool = False,
+    skip_overpass: bool = False,
 ) -> tuple[int, int]:
-    overpass_items = fetch_overpass_sumsel(region=region)
+    overpass_items = [] if skip_overpass else fetch_overpass_sumsel(region=region)
     merged: list[dict[str, Any]] = [] if live_only else list(VERIFIED_SUMSEL_FASKES)
 
     for cand in overpass_items:
@@ -582,13 +708,19 @@ def load_osm_faskes(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch fasilitas kesehatan dari OpenStreetMap Overpass API")
-    parser.add_argument("--region", choices=["sumsel", "kalimantan", "all"], default="all")
+    parser.add_argument(
+        "--region",
+        default="priority",
+        help="Pilihan: priority (Sumsel+Kalimantan), indonesia (38 provinsi), atau kode provinsi",
+    )
     parser.add_argument("--live-only", action="store_true", help="Hanya ambil data live OSM tanpa daftar sampel hardcoded")
     parser.add_argument("--clear-sample", action="store_true", help="Hapus data sampel hardcoded sebelumnya dari database")
+    parser.add_argument("--skip-overpass", action="store_true", help="Lewati pemanggilan Overpass live")
     args = parser.parse_args()
     total, from_live = load_osm_faskes(
         region=args.region,
         live_only=args.live_only,
         clear_sample=args.clear_sample,
+        skip_overpass=args.skip_overpass,
     )
     print(f"Faskes dimuat: {total} (live Overpass: {from_live}, live_only={args.live_only})")

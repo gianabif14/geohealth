@@ -9,12 +9,10 @@ from etl.fetch_osm import _load_kabupaten_polygons, match_kabupaten_id
 
 SAMPLE_CSV_PATH = Path(__file__).resolve().parents[2] / "data" / "sample" / "hotspot_sampel.csv"
 
-
+# Bounding box seluruh Indonesia sesuai spesifikasi Tugas Orang 1
 FIRMS_AREAS = [
-    ("Sumatera Selatan", "102.0,-4.9,106.2,-1.6"),
-    ("Kalimantan", "108.5,-4.3,119.0,4.3"),
+    ("Indonesia", "95.0,-11.0,141.0,6.0"),
 ]
-
 
 FIRMS_SOURCES = ["VIIRS_NOAA20_NRT", "MODIS_NRT", "VIIRS_SNPP_NRT"]
 
@@ -22,7 +20,7 @@ FIRMS_SOURCES = ["VIIRS_NOAA20_NRT", "MODIS_NRT", "VIIRS_SNPP_NRT"]
 def _fetch_firms_live() -> tuple[list[dict], bool]:
     if not settings.firms_map_key:
         return [], False
-    # NASA FIRMS API area/csv hanya menerima rentang 1..5 hari
+    # NASA FIRMS API area/csv menerima rentang 1..5 hari
     rows: list[dict] = []
     any_ok = False
     for source_name in FIRMS_SOURCES:
@@ -32,7 +30,7 @@ def _fetch_firms_live() -> tuple[list[dict], bool]:
                 f"{settings.firms_map_key}/{source_name}/{bbox}/5"
             )
             try:
-                resp = httpx.get(url, timeout=20.0)
+                resp = httpx.get(url, timeout=25.0)
                 resp.raise_for_status()
                 any_ok = True
                 reader = csv.DictReader(StringIO(resp.text))
@@ -68,7 +66,7 @@ def _load_sample_hotspots() -> list[dict]:
         reader = csv.DictReader(f)
         for idx, r in enumerate(reader):
             # Geser timestamp sampel agar selalu berada dalam jendela 6 hari terakhir dari saat dijalankan
-            hours_ago = (idx * 5) % (6 * 24)
+            hours_ago = (idx * 3) % (6 * 24)
             dt_iso = (now - timedelta(hours=hours_ago)).replace(microsecond=0).isoformat()
             rows.append(
                 {
@@ -91,7 +89,7 @@ def load_hotspots() -> tuple[int, str]:
         source_used = "firms"
     else:
         if firms_ok:
-            print("Info: NASA FIRMS mengembalikan 0 titik panas aktif dalam 5 hari terakhir di Sumatera Selatan; memakai data sampel.")
+            print("Info: NASA FIRMS mengembalikan 0 titik panas aktif dalam 5 hari terakhir di Indonesia; memakai data sampel.")
         rows = _load_sample_hotspots()
         source_used = "sampel"
 
