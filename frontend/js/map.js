@@ -1,4 +1,6 @@
 let mapInstance = null;
+let osmTileLayer = null;
+let esriTileLayer = null;
 let userLayerGroup = null;
 let faskesLayerGroup = null;
 let hotspotLayerGroup = null;
@@ -16,21 +18,22 @@ function createFacilitySvgIcon(jenis, isSelected = false) {
   const strokeColor = isSelected ? "#B83A14" : "#FFFFFF";
   let svg = "";
   if (jenis === "rumah_sakit") {
-    svg = `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="14" cy="14" r="11.5" fill="#0F5C59" stroke="${strokeColor}" stroke-width="${strokeW}"/>
-      <path d="M14 8.5v11M8.5 14h11" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+    svg = `<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="15" r="12.5" fill="#14533C" stroke="${strokeColor}" stroke-width="${strokeW}"/>
+      <circle cx="15" cy="15" r="9.5" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+      <path d="M15 9.5v11M9.5 15h11" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
     </svg>`;
   } else if (jenis === "puskesmas") {
-    svg = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="3" width="18" height="18" rx="3" fill="#1F6F50" stroke="${strokeColor}" stroke-width="${strokeW}"/>
-      <path d="M12 7.5v9M7.5 12h9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    svg = `<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="20" height="20" rx="4" fill="#1F6F50" stroke="${strokeColor}" stroke-width="${strokeW}"/>
+      <path d="M13 8v10M8 13h10" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
   } else {
-    svg = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="12,3 21.5,20 2.5,20" fill="#3B5978" stroke="${strokeColor}" stroke-width="${strokeW}"/>
+    svg = `<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="13,3 23,21.5 3,21.5" fill="#355670" stroke="${strokeColor}" stroke-width="${strokeW}"/>
     </svg>`;
   }
-  const sz = jenis === "rumah_sakit" ? 28 : 24;
+  const sz = jenis === "rumah_sakit" ? 30 : 26;
   return window.L.divIcon({
     className: "geo-marker-icon",
     html: svg,
@@ -61,19 +64,18 @@ export function initMap(initialLat, initialLon, onMapPickPoint) {
   }).setView([initialLat, initialLon], 10);
 
   // Gunakan basemap OpenStreetMap dan Esri Street dengan atribusi lengkap
-  const osmTile = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  osmTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
   });
-  const esriStreet = L.tileLayer(
+  esriTileLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
     {
       maxZoom: 19,
       attribution: "Tiles &copy; Esri, OpenStreetMap contributors",
     }
   );
-  osmTile.addTo(mapInstance);
-  L.control.layers({ "OpenStreetMap": osmTile, "Esri Jalan": esriStreet }, {}, { position: "topright" }).addTo(mapInstance);
+  osmTileLayer.addTo(mapInstance);
 
   kabupatenLayerGroup = L.layerGroup().addTo(mapInstance);
   h3LayerGroup = L.layerGroup().addTo(mapInstance);
@@ -100,7 +102,7 @@ export function renderUserConcentricRings(lat, lon, radiusKm, accuracyM = null) 
   innerRingsKm.forEach((rk) => {
     L.circle([lat, lon], {
       radius: rk * 1000,
-      color: "#0F5C59",
+      color: "#14533C",
       weight: 1,
       dashArray: "4 6",
       fill: false,
@@ -110,10 +112,10 @@ export function renderUserConcentricRings(lat, lon, radiusKm, accuracyM = null) 
 
   L.circle([lat, lon], {
     radius: radiusKm * 1000,
-    color: "#0F5C59",
+    color: "#14533C",
     weight: 1.8,
-    fillColor: "#0F5C59",
-    fillOpacity: 0.05,
+    fillColor: "#14533C",
+    fillOpacity: 0.06,
     interactive: false,
   }).addTo(userLayerGroup);
 
@@ -174,7 +176,7 @@ export function renderFacilitiesOnMap(facilities, selectedId, onSelectFacility, 
 
     const btnRoute = document.createElement("button");
     btnRoute.type = "button";
-    btnRoute.className = "btn btn-primary btn-small";
+    btnRoute.className = "btn-primary-sm";
     btnRoute.textContent = "Buka rute ke fasilitas ini";
     btnRoute.addEventListener("click", () => {
       onRouteRequest(f);
@@ -182,6 +184,11 @@ export function renderFacilitiesOnMap(facilities, selectedId, onSelectFacility, 
     popupDiv.appendChild(btnRoute);
 
     marker.bindPopup(popupDiv);
+    marker.bindTooltip(`Klik untuk detail: ${escapeHtml(f.nama)}`, {
+      direction: "top",
+      offset: [0, -14],
+      className: "geo-dark-tooltip",
+    });
     marker.on("click", () => {
       onSelectFacility(f.id, false);
     });
@@ -285,7 +292,7 @@ export function drawRouteLine(coordsLatLon, isStraightFallback = false) {
   const L = window.L;
   routeLayerGroup.clearLayers();
   const poly = L.polyline(coordsLatLon, {
-    color: isStraightFallback ? "#B83A14" : "#0F5C59",
+    color: isStraightFallback ? "#B83A14" : "#14533C",
     weight: 4.5,
     dashArray: isStraightFallback ? "6 6" : "",
     opacity: 0.9,
@@ -299,6 +306,17 @@ export function drawRouteLine(coordsLatLon, isStraightFallback = false) {
 export function clearRouteLine() {
   if (routeLayerGroup) {
     routeLayerGroup.clearLayers();
+  }
+}
+
+export function setBasemap(provider) {
+  if (!mapInstance || !osmTileLayer || !esriTileLayer) return;
+  if (provider === "esri") {
+    if (mapInstance.hasLayer(osmTileLayer)) mapInstance.removeLayer(osmTileLayer);
+    if (!mapInstance.hasLayer(esriTileLayer)) esriTileLayer.addTo(mapInstance);
+  } else {
+    if (mapInstance.hasLayer(esriTileLayer)) mapInstance.removeLayer(esriTileLayer);
+    if (!mapInstance.hasLayer(osmTileLayer)) osmTileLayer.addTo(mapInstance);
   }
 }
 

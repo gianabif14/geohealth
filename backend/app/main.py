@@ -1,7 +1,9 @@
+from contextlib import asynccontextmanager
 import re
 from pathlib import Path
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
+from app.db import close_pools, get_backend_mode
 from app.routers import analisis, faskes, hotspot, meta
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
@@ -12,11 +14,21 @@ def redact_query_coords(query_string: str) -> str:
     return _COORD_QUERY_RE.sub(r"\1=[REDACTED]", query_string)
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    get_backend_mode()
+    try:
+        yield
+    finally:
+        close_pools()
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="GeoHealth GIS API",
         description="Sistem Informasi Geospasial Fasilitas Kesehatan untuk Mitigasi Dampak Karhutla di Sumatera Selatan",
         version="1.0.0",
+        lifespan=lifespan,
     )
 
     @app.middleware("http")

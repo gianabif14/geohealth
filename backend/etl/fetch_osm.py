@@ -1,3 +1,4 @@
+import argparse
 import json
 from typing import Any
 import httpx
@@ -331,29 +332,67 @@ def classify_jenis(nama: str, amenity: str, healthcare: str) -> str:
     return "lainnya"
 
 
-def fetch_overpass_sumsel() -> list[dict[str, Any]]:
-    query = """
-    [out:json][timeout:18];
+OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+]
+
+
+REGION_BBOXES: dict[str, list[tuple[float, float, float, float]]] = {
+    "sumsel": [(-4.15, 103.50, -2.00, 105.80)],
+    # Kalimantan dibagi per sub-wilayah agar Overpass merespons cepat tanpa timeout
+    "kalimantan": [
+        (-3.50, 113.50, -1.80, 114.90),  # Kalteng (Palangka Raya, Pulang Pisau, Kapuas)
+        (-0.90, 109.00, 0.25, 110.00),   # Kalbar (Pontianak, Kubu Raya)
+        (-3.70, 114.45, -2.85, 115.45),  # Kalsel (Banjarmasin, Banjarbaru, Banjar)
+        (-1.35, 116.70, -0.30, 117.60),  # Kaltim (Balikpapan, Samarinda, Kukar)
+    ],
+}
+
+
+def _fetch_overpass_bbox(bbox: tuple[float, float, float, float]) -> list[dict[str, Any]]:
+    s, w, n, e = bbox
+    # Gunakan exact tag match (bukan regex) agar indeks Overpass cepat
+    query = f"""
+    [out:json][timeout:25];
     (
-      node["amenity"~"^(hospital|clinic)$"](-4.15,103.50,-2.00,105.80);
-      way["amenity"~"^(hospital|clinic)$"](-4.15,103.50,-2.00,105.80);
+      node["amenity"="hospital"]({s},{w},{n},{e});
+      way["amenity"="hospital"]({s},{w},{n},{e});
+      node["amenity"="clinic"]({s},{w},{n},{e});
+      way["amenity"="clinic"]({s},{w},{n},{e});
+      node["amenity"="doctors"]({s},{w},{n},{e});
+      node["healthcare"="centre"]({s},{w},{n},{e});
+      way["healthcare"="centre"]({s},{w},{n},{e});
     );
-    out center 120;
+    out center 250;
     """
-    try:
-        resp = httpx.post(
-            "https://overpass-api.de/api/interpreter",
-            data={"data": query},
-            timeout=15.0,
-            headers={"User-Agent": "GeoHealth-UPNVY-GIS/1.0"},
-        )
-        resp.raise_for_status()
-        elements = resp.json().get("elements", [])
-    except Exception:
+    elements = []
+    for endpoint in OVERPASS_ENDPOINTS:
+        try:
+            resp = httpx.post(
+                endpoint,
+                data={"data": query},
+                timeout=25.0,
+                headers={"User-Agent": "GeoHealth-UPNVY-GIS/1.0"},
+            )
+            resp.raise_for_status()
+            elements = resp.json().get("elements", [])
+            if elements:
+                break
+        except Exception as exc:
+            print(f"Overpass {endpoint} gagal ({exc}), mencoba mirror lain...")
+            continue
+
+    if not elements:
         return []
 
     parsed: list[dict[str, Any]] = []
+    seen_ids: set[int] = set()
     for el in elements:
+        osm_id = int(el["id"])
+        if osm_id in seen_ids:
+            continue
         tags = el.get("tags", {})
         nama = tags.get("name") or tags.get("name:id")
         if not nama:
@@ -362,13 +401,14 @@ def fetch_overpass_sumsel() -> list[dict[str, Any]]:
         lon = el.get("lon") or (el.get("center") or {}).get("lon")
         if lat is None or lon is None:
             continue
+        seen_ids.add(osm_id)
         jenis = classify_jenis(nama, tags.get("amenity", ""), tags.get("healthcare", ""))
         addr_parts = [tags.get("addr:street"), tags.get("addr:subdistrict"), tags.get("addr:city")]
         alamat = ", ".join(p for p in addr_parts if p) or tags.get("addr:full")
         telepon = tags.get("phone") or tags.get("contact:phone")
         parsed.append(
             {
-                "osm_id": int(el["id"]),
+                "osm_id": osm_id,
                 "nama": nama.strip(),
                 "jenis": jenis,
                 "lat": float(lat),
@@ -380,6 +420,24 @@ def fetch_overpass_sumsel() -> list[dict[str, Any]]:
             }
         )
     return parsed
+
+
+def fetch_overpass_sumsel(region: str = "all") -> list[dict[str, Any]]:
+    targets = list(REGION_BBOXES.keys()) if region == "all" else [region]
+    results: list[dict[str, Any]] = []
+    seen_global: set[int] = set()
+    for reg in targets:
+        bboxes = REGION_BBOXES.get(reg, [])
+        reg_count = 0
+        for bbox in bboxes:
+            items = _fetch_overpass_bbox(bbox)
+            for item in items:
+                if item["osm_id"] not in seen_global:
+                    seen_global.add(item["osm_id"])
+                    results.append(item)
+                    reg_count += 1
+        print(f"Overpass [{reg}]: {reg_count} fasilitas ditemukan.")
+    return results
 
 
 def _load_kabupaten_polygons() -> list[tuple[int, str, Any]]:
@@ -398,7 +456,20 @@ def _load_kabupaten_polygons() -> list[tuple[int, str, Any]]:
     return out
 
 
-def match_kabupaten_id(lat: float, lon: float, kabs: list[tuple[int, str, Any]]) -> int | None:
+def match_kabupaten_id(
+    lat: float,
+    lon: float,
+    kabs: list[tuple[int, str, Any]],
+    text_hint: str | None = None,
+) -> int | None:
+    if text_hint:
+        low_hint = text_hint.lower()
+        # Urutkan nama terpanjang lebih dulu agar "musi banyuasin" tidak tertukar dengan "banyuasin"
+        for kid, knama, _ in sorted(kabs, key=lambda x: len(x[1]), reverse=True):
+            clean_name = knama.lower().replace("kabupaten ", "").replace("kota ", "").strip()
+            if clean_name and clean_name in low_hint:
+                return kid
+
     pt = Point(lon, lat)
     for kid, _, poly in kabs:
         if poly.contains(pt) or poly.touches(pt):
@@ -413,9 +484,13 @@ def match_kabupaten_id(lat: float, lon: float, kabs: list[tuple[int, str, Any]])
     return best_id
 
 
-def load_osm_faskes() -> tuple[int, int]:
-    overpass_items = fetch_overpass_sumsel()
-    merged: list[dict[str, Any]] = list(VERIFIED_SUMSEL_FASKES)
+def load_osm_faskes(
+    region: str = "all",
+    live_only: bool = False,
+    clear_sample: bool = False,
+) -> tuple[int, int]:
+    overpass_items = fetch_overpass_sumsel(region=region)
+    merged: list[dict[str, Any]] = [] if live_only else list(VERIFIED_SUMSEL_FASKES)
 
     for cand in overpass_items:
         is_dup = any(
@@ -427,10 +502,20 @@ def load_osm_faskes() -> tuple[int, int]:
 
     kabs = _load_kabupaten_polygons()
     mode = get_backend_mode()
+
+    if clear_sample:
+        if mode == "postgis":
+            with get_pg_conn() as conn:
+                conn.execute("DELETE FROM faskes WHERE osm_id BETWEEN 10000001 AND 10000999")
+        else:
+            with get_sqlite_conn() as conn:
+                conn.execute("DELETE FROM faskes WHERE osm_id BETWEEN 10000001 AND 10000999")
+
     inserted = 0
 
     for item in merged:
-        kid = match_kabupaten_id(item["lat"], item["lon"], kabs)
+        hint = f"{item.get('alamat') or ''} {item.get('nama') or ''}"
+        kid = match_kabupaten_id(item["lat"], item["lon"], kabs, text_hint=hint)
         if mode == "postgis":
             sql = """
                 INSERT INTO faskes (osm_id, nama, jenis, alamat, telepon, kabupaten_id, sumber, geom)
@@ -488,9 +573,20 @@ def load_osm_faskes() -> tuple[int, int]:
                 )
         inserted += 1
 
+    from etl.simulate_status import generate_simulated_statuses
+    generate_simulated_statuses()
     return inserted, len(overpass_items)
 
 
 if __name__ == "__main__":
-    total, from_live = load_osm_faskes()
-    print(f"Faskes dimuat: {total} (live Overpass tambahan: {from_live})")
+    parser = argparse.ArgumentParser(description="Fetch fasilitas kesehatan dari OpenStreetMap Overpass API")
+    parser.add_argument("--region", choices=["sumsel", "kalimantan", "all"], default="all")
+    parser.add_argument("--live-only", action="store_true", help="Hanya ambil data live OSM tanpa daftar sampel hardcoded")
+    parser.add_argument("--clear-sample", action="store_true", help="Hapus data sampel hardcoded sebelumnya dari database")
+    args = parser.parse_args()
+    total, from_live = load_osm_faskes(
+        region=args.region,
+        live_only=args.live_only,
+        clear_sample=args.clear_sample,
+    )
+    print(f"Faskes dimuat: {total} (live Overpass: {from_live}, live_only={args.live_only})")

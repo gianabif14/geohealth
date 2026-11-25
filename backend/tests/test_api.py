@@ -11,7 +11,7 @@ def test_meta_endpoint():
     assert data["wilayah_cakupan"] == "Provinsi Sumatera Selatan"
     assert data["total_faskes"] >= 28
     assert data["total_hotspot"] >= 20
-    assert len(data["kabupaten_pilot"]) == 4
+    assert len(data["kabupaten_pilot"]) >= 4
 
 
 def test_terdekat_rejects_outside_sumsel_and_protects_privacy():

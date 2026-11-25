@@ -16,9 +16,8 @@ def validate_and_cloak_location(
 ) -> dict:
     if not is_within_sumsel_bbox(lat, lon):
         raise ValueError(
-            "Lokasi berada di luar cakupan Provinsi Sumatera Selatan "
-            "(-5.20 s.d. -1.40 LS, 101.80 s.d. 106.40 BT). "
-            "Pilih titik pada peta di wilayah Sumatera Selatan."
+            "Lokasi berada di luar cakupan wilayah Sumatera Selatan dan Kalimantan. "
+            "Pilih titik pada peta di wilayah Sumatera Selatan atau Kalimantan."
         )
 
     # 3 desimal derajat setara ~111 m di ekuator untuk minimisasi data sesuai UU PDP

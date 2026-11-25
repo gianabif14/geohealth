@@ -38,10 +38,17 @@ def azimuth_to_compass(azimuth_deg: float) -> str:
     return COMPASS_DIRS[idx]
 
 
-def is_within_sumsel_bbox(lat: float, lon: float) -> bool:
+def is_within_supported_bbox(lat: float, lon: float) -> bool:
     if not (math.isfinite(lat) and math.isfinite(lon)):
         return False
-    return (
+    in_sumsel = (
         settings.bbox_min_lat <= lat <= settings.bbox_max_lat
         and settings.bbox_min_lon <= lon <= settings.bbox_max_lon
     )
+    # Cakupan Pulau Kalimantan (Kalbar, Kalteng, Kalsel, Kaltim, Kaltara)
+    in_kalimantan = -4.50 <= lat <= 4.50 and 108.50 <= lon <= 119.20
+    return in_sumsel or in_kalimantan
+
+
+def is_within_sumsel_bbox(lat: float, lon: float) -> bool:
+    return is_within_supported_bbox(lat, lon)

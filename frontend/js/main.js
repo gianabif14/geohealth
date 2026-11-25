@@ -20,11 +20,13 @@ import {
   renderHotspotsLayer,
   renderKabupatenLayer,
   renderUserConcentricRings,
+  setBasemap,
 } from "./map.js";
 import { appState } from "./state.js";
 
 let cachedHotspotsGeoJSON = null;
 let cachedKabupatenGeoJSON = null;
+let latestFaskesReqId = 0;
 
 function setUiState(mode, errorMessage = "") {
   const elLoading = document.getElementById("state-loading");
@@ -46,6 +48,11 @@ function updateLocationHeaderUI(privacyInfo = null) {
   const coordsSpan = document.getElementById("teks-koordinat");
   const roundNote = privacyInfo ? ` (dibulatkan \u00b1${privacyInfo.dibulatkan_m} m)` : "";
   coordsSpan.textContent = `${appState.userLabel} (${appState.userLat.toFixed(3)}, ${appState.userLon.toFixed(3)})${roundNote}`;
+
+  const topbarLocLabel = document.getElementById("topbar-loc-label");
+  if (topbarLocLabel) {
+    topbarLocLabel.textContent = appState.userLabel;
+  }
 
   const alertBox = document.getElementById("kotak-peringatan-lokasi");
   const warnings = [];
@@ -93,6 +100,7 @@ function refreshDisplayedListAndMarkers() {
   );
 
   if (list.length === 0) {
+    document.getElementById("daftar-faskes").innerHTML = "";
     setUiState("empty");
     return;
   }
@@ -107,6 +115,7 @@ function refreshDisplayedListAndMarkers() {
 }
 
 async function reloadNearestFacilities() {
+  const reqId = ++latestFaskesReqId;
   setUiState("loading");
   renderUserConcentricRings(
     appState.userLat,
@@ -117,6 +126,7 @@ async function reloadNearestFacilities() {
 
   try {
     const data = await fetchNearestFaskes(appState);
+    if (reqId !== latestFaskesReqId) return;
     appState.facilities = (data.hasil || []).map((f) => ({
       ...f,
       _userLat: appState.userLat,
@@ -126,6 +136,7 @@ async function reloadNearestFacilities() {
     updateSmokeContextStrip(data.hotspot_sekitar_5km);
     refreshDisplayedListAndMarkers();
   } catch (err) {
+    if (reqId !== latestFaskesReqId) return;
     setUiState("error", err.message || "Gagal memuat data fasilitas terdekat.");
   }
 }
@@ -300,6 +311,73 @@ function bindTopbarAndPresetEvents() {
       : "Sembunyikan panel daftar";
     invalidateMapSize();
   });
+
+  // Desktop right drawer hide/show toggle
+  const btnDrawer = document.getElementById("btn-toggle-drawer");
+  const labelDrawer = document.getElementById("drawer-toggle-label");
+  if (btnDrawer && labelDrawer) {
+    btnDrawer.addEventListener("click", () => {
+      const isCollapsed = panelKontrol.classList.toggle("drawer-collapsed");
+      btnDrawer.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      labelDrawer.textContent = isCollapsed ? "Tampilkan" : "Sembunyikan";
+      invalidateMapSize();
+    });
+  }
+
+  // Segmented basemap switcher (top-left)
+  const btnOsm = document.getElementById("btn-basemap-osm");
+  const btnEsri = document.getElementById("btn-basemap-esri");
+  if (btnOsm && btnEsri) {
+    btnOsm.addEventListener("click", () => {
+      setBasemap("osm");
+      btnOsm.classList.add("active");
+      btnOsm.setAttribute("aria-pressed", "true");
+      btnEsri.classList.remove("active");
+      btnEsri.setAttribute("aria-pressed", "false");
+    });
+    btnEsri.addEventListener("click", () => {
+      setBasemap("esri");
+      btnEsri.classList.add("active");
+      btnEsri.setAttribute("aria-pressed", "true");
+      btnOsm.classList.remove("active");
+      btnOsm.setAttribute("aria-pressed", "false");
+    });
+  }
+
+  // Fullscreen map toggle (top-left)
+  const btnFullscreen = document.getElementById("btn-fullscreen-map");
+  if (btnFullscreen) {
+    btnFullscreen.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          btnFullscreen.setAttribute("aria-pressed", "true");
+        } else {
+          await document.exitFullscreen();
+          btnFullscreen.setAttribute("aria-pressed", "false");
+        }
+      } catch (_err) {
+        // Ignore if fullscreen is blocked by browser policy
+      }
+      invalidateMapSize();
+    });
+  }
+
+  // Collapsible accordion cards in right drawer
+  document.querySelectorAll("[data-accordion]").forEach((card) => {
+    const toggle = card.querySelector(".accordion-toggle");
+    if (!toggle) return;
+    const iconMinus = toggle.querySelector(".icon-minus");
+    const iconPlus = toggle.querySelector(".icon-plus");
+    toggle.addEventListener("click", () => {
+      const collapsed = card.classList.toggle("is-collapsed");
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      if (iconMinus && iconPlus) {
+        iconMinus.classList.toggle("hidden", collapsed);
+        iconPlus.classList.toggle("hidden", !collapsed);
+      }
+    });
+  });
 }
 
 function switchTab(tabName) {
@@ -307,6 +385,8 @@ function switchTab(tabName) {
   const btnAnalisis = document.getElementById("tab-btn-analisis");
   const paneFaskes = document.getElementById("pane-faskes");
   const paneAnalisis = document.getElementById("pane-analisis");
+  const panelKontrol = document.getElementById("panel-kontrol");
+  const scrollBox = document.getElementById("drawer-cards-scroll");
 
   const isFaskes = tabName === "faskes";
   btnFaskes.classList.toggle("active", isFaskes);
@@ -317,13 +397,66 @@ function switchTab(tabName) {
   paneFaskes.classList.toggle("hidden", !isFaskes);
   paneAnalisis.classList.toggle("hidden", isFaskes);
 
+  // Pastikan drawer/sheet terbuka saat pengguna mengganti tab
+  if (panelKontrol && panelKontrol.classList.contains("drawer-collapsed")) {
+    panelKontrol.classList.remove("drawer-collapsed");
+    const btnDrawer = document.getElementById("btn-toggle-drawer");
+    const labelDrawer = document.getElementById("drawer-toggle-label");
+    if (btnDrawer) btnDrawer.setAttribute("aria-expanded", "true");
+    if (labelDrawer) labelDrawer.textContent = "Sembunyikan";
+    invalidateMapSize();
+  }
+  if (panelKontrol && panelKontrol.classList.contains("sheet-collapsed")) {
+    panelKontrol.classList.remove("sheet-collapsed");
+    const btnSheet = document.getElementById("btn-toggle-sheet");
+    const labelSheet = document.getElementById("sheet-toggle-label");
+    if (btnSheet) btnSheet.setAttribute("aria-expanded", "true");
+    if (labelSheet) labelSheet.textContent = "Sembunyikan panel daftar";
+    invalidateMapSize();
+  }
+  if (scrollBox) {
+    scrollBox.scrollTop = 0;
+  }
+
   if (!isFaskes) {
     appState.layers.showH3 = document.getElementById("chk-layer-h3").checked;
     if (appState.analysisData) {
       renderH3CellsLayer(appState.analysisData.sel_h3, appState.layers.showH3);
+    } else {
+      loadAnalysisOnly();
     }
   } else {
     renderH3CellsLayer([], false);
+  }
+}
+
+async function loadAnalysisOnly() {
+  const box = document.getElementById("analisis-state-box");
+  const title = document.getElementById("analisis-state-title");
+  const desc = document.getElementById("analisis-state-desc");
+  if (box) {
+    box.classList.remove("hidden", "state-error");
+    title.textContent = "Memuat analisis akses H3...";
+    desc.textContent = "Menghitung skor keterbatasan akses dan peringkat wilayah Sumatera Selatan.";
+  }
+  try {
+    const analisis = await fetchAnalisisAkses();
+    appState.analysisData = analisis;
+    renderAnalysisTables(analisis, (cell) => {
+      panMapTo(cell.centroid_lat, cell.centroid_lon, 11);
+    });
+    const isAnalisisTab = !document.getElementById("pane-analisis").classList.contains("hidden");
+    if (isAnalisisTab) {
+      renderH3CellsLayer(analisis.sel_h3, appState.layers.showH3);
+    }
+    if (box) box.classList.add("hidden");
+  } catch (err) {
+    if (box) {
+      box.classList.remove("hidden");
+      box.classList.add("state-error");
+      title.textContent = "Gagal memuat analisis akses";
+      desc.textContent = err.message || "Pastikan layanan backend sedang berjalan di http://127.0.0.1:8000.";
+    }
   }
 }
 

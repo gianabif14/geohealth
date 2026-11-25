@@ -1,3 +1,4 @@
+import atexit
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -17,6 +18,19 @@ from app.services.geo import azimuth_to_compass, geodesic_inverse, haversine_m
 _pg_pool: ConnectionPool | None = None
 _backend_mode: str | None = None  # "postgis" | "sqlite_spatial"
 SQLITE_PATH = Path(__file__).resolve().parents[2] / "data" / "geohealth_local.sqlite"
+
+
+def close_pools() -> None:
+    global _pg_pool
+    if _pg_pool is not None:
+        try:
+            _pg_pool.close()
+        except Exception:
+            pass
+        _pg_pool = None
+
+
+atexit.register(close_pools)
 
 
 def get_backend_mode() -> str:
@@ -324,7 +338,7 @@ def query_nearest_faskes(
                    s.tempat_tidur_tersedia, s.tempat_tidur_total, s.catatan_layanan,
                    s.sumber AS status_sumber, s.diperbarui_pada,
                    ST_Distance(f.geom::geography, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) AS jarak_m,
-                   DEGREES(ST_Azimuth(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, f.geom::geography)) AS azimuth_deg
+                   COALESCE(DEGREES(ST_Azimuth(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, f.geom::geography)), 0.0) AS azimuth_deg
             FROM faskes f
             JOIN faskes_status s ON s.faskes_id = f.id
             LEFT JOIN kabupaten k ON k.id = f.kabupaten_id
@@ -344,7 +358,7 @@ def query_nearest_faskes(
             hs_row = conn.execute(hs_sql, (lon, lat)).fetchone()
         hs_5km = int(hs_row["cnt"]) if hs_row else 0
         out = [
-            _row_to_faskes_dict(r, float(r["jarak_m"]), (float(r["azimuth_deg"]) + 360.0) % 360.0)
+            _row_to_faskes_dict(r, float(r["jarak_m"]), (float(r["azimuth_deg"] or 0.0) + 360.0) % 360.0)
             for r in rows
         ]
         return out, hs_5km

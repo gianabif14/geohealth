@@ -75,14 +75,14 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
 
     const btnFocus = document.createElement("button");
     btnFocus.type = "button";
-    btnFocus.className = "btn btn-outline btn-small";
+    btnFocus.className = "btn-outline-sm";
     btnFocus.textContent = "Lihat di peta";
     btnFocus.addEventListener("click", () => onSelectFacility(f.id, true));
     actionsDiv.appendChild(btnFocus);
 
     const btnRoute = document.createElement("button");
     btnRoute.type = "button";
-    btnRoute.className = "btn btn-primary btn-small";
+    btnRoute.className = "btn-primary-sm";
     btnRoute.textContent = "Buka rute";
     btnRoute.addEventListener("click", () => onRouteRequest(f));
     actionsDiv.appendChild(btnRoute);
@@ -91,7 +91,7 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
       const telClean = f.telepon.replace(/[^0-9+]/g, "");
       const linkTel = document.createElement("a");
       linkTel.href = `tel:${telClean}`;
-      linkTel.className = "btn btn-outline btn-small";
+      linkTel.className = "btn-outline-sm";
       linkTel.textContent = `Telepon ${f.telepon}`;
       actionsDiv.appendChild(linkTel);
     }
@@ -100,7 +100,7 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
     linkExt.href = osmRouteUrl;
     linkExt.target = "_blank";
     linkExt.rel = "noopener noreferrer";
-    linkExt.className = "btn btn-outline btn-small";
+    linkExt.className = "btn-outline-sm";
     linkExt.textContent = "Navigasi OSM";
     actionsDiv.appendChild(linkExt);
 
@@ -119,24 +119,41 @@ export function renderAnalysisTables(analysisData, onFocusH3Cell) {
   }
 
   tbody.innerHTML = "";
-  (analysisData.kabupaten_ranking || []).forEach((k) => {
-    const tr = document.createElement("tr");
-    const prioClass = `prio-${k.prioritas_posko}`;
-    tr.innerHTML = `
-      <td>
-        <strong>${escapeHtml(k.nama)}</strong>
-        ${k.is_pilot ? '<br><small style="color:#0F5C59;font-weight:700;">Wilayah Pilot</small>' : ""}
-      </td>
-      <td><strong>${k.skor_akses_terbatas}</strong> / 100</td>
-      <td>${k.rerata_jarak_faskes_siap_km} km<br><small>${k.jumlah_faskes_siap_igd_oksigen}/${k.jumlah_faskes} faskes siap</small></td>
-      <td>${k.jumlah_hotspot_7hari} titik</td>
-      <td><span class="prio-label ${prioClass}">${escapeHtml(k.prioritas_posko.toUpperCase())}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  const kabList = analysisData.kabupaten_ranking || [];
+  if (kabList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#4A5750;padding:12px;">Belum ada data peringkat kabupaten/kota.</td></tr>';
+  } else {
+    kabList.forEach((k) => {
+      const tr = document.createElement("tr");
+      const prioClass = `prio-${k.prioritas_posko}`;
+      tr.innerHTML = `
+        <td>
+          <strong>${escapeHtml(k.nama)}</strong>
+          ${k.is_pilot ? '<br><small style="color:#14533C;font-weight:700;">Wilayah Pilot</small>' : ""}
+        </td>
+        <td><strong>${k.skor_akses_terbatas}</strong> / 100</td>
+        <td>${k.rerata_jarak_faskes_siap_km} km<br><small>${k.jumlah_faskes_siap_igd_oksigen}/${k.jumlah_faskes} faskes siap</small></td>
+        <td>${k.jumlah_hotspot_7hari} titik</td>
+        <td><span class="prio-label ${prioClass}">${escapeHtml(k.prioritas_posko.toUpperCase())}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
   h3List.innerHTML = "";
-  (analysisData.sel_h3 || []).slice(0, 12).forEach((c) => {
+  const h3Cells = analysisData.sel_h3 || [];
+  if (h3Cells.length === 0) {
+    const emptyLi = document.createElement("li");
+    emptyLi.className = "ui-state-box";
+    emptyLi.innerHTML = `
+      <p class="state-title">Tidak ada sel H3 kritis dalam 7 hari terakhir</p>
+      <p class="state-desc" style="margin-bottom:0;">Grid H3 hanya terbentuk pada sel yang memiliki titik panas aktif 7 hari terakhir. Saat ini tercatat 0 titik panas 7 hari di basis data.</p>
+    `;
+    h3List.appendChild(emptyLi);
+    return;
+  }
+
+  h3Cells.slice(0, 12).forEach((c) => {
     const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.type = "button";

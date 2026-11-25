@@ -10,36 +10,46 @@ from etl.fetch_osm import _load_kabupaten_polygons, match_kabupaten_id
 SAMPLE_CSV_PATH = Path(__file__).resolve().parents[2] / "data" / "sample" / "hotspot_sampel.csv"
 
 
-def _fetch_firms_live() -> list[dict]:
+FIRMS_AREAS = [
+    ("Sumatera Selatan", "102.0,-4.9,106.2,-1.6"),
+    ("Kalimantan", "108.5,-4.3,119.0,4.3"),
+]
+
+
+def _fetch_firms_live() -> tuple[list[dict], bool]:
     if not settings.firms_map_key:
-        return []
-    url = (
-        f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
-        f"{settings.firms_map_key}/VIIRS_SNPP_NRT/102.0,-4.9,106.2,-1.6/7"
-    )
-    try:
-        resp = httpx.get(url, timeout=15.0)
-        resp.raise_for_status()
-        reader = csv.DictReader(StringIO(resp.text))
-        rows = []
-        for r in reader:
-            acq_date = r.get("acq_date", "")
-            acq_time = r.get("acq_time", "0000").zfill(4)
-            dt_str = f"{acq_date}T{acq_time[:2]}:{acq_time[2:]}:00Z"
-            rows.append(
-                {
-                    "waktu_akuisisi": dt_str,
-                    "lat": float(r["latitude"]),
-                    "lon": float(r["longitude"]),
-                    "confidence": r.get("confidence", "nominal"),
-                    "frp": float(r.get("frp") or 0.0),
-                    "satelit": "VIIRS_SNPP",
-                    "sumber": "firms",
-                }
-            )
-        return rows
-    except Exception:
-        return []
+        return [], False
+    # NASA FIRMS API area/csv hanya menerima rentang 1..5 hari
+    rows: list[dict] = []
+    any_ok = False
+    for area_name, bbox in FIRMS_AREAS:
+        url = (
+            f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+            f"{settings.firms_map_key}/VIIRS_SNPP_NRT/{bbox}/5"
+        )
+        try:
+            resp = httpx.get(url, timeout=20.0)
+            resp.raise_for_status()
+            any_ok = True
+            reader = csv.DictReader(StringIO(resp.text))
+            for r in reader:
+                acq_date = r.get("acq_date", "")
+                acq_time = r.get("acq_time", "0000").zfill(4)
+                dt_str = f"{acq_date}T{acq_time[:2]}:{acq_time[2:]}:00Z"
+                rows.append(
+                    {
+                        "waktu_akuisisi": dt_str,
+                        "lat": float(r["latitude"]),
+                        "lon": float(r["longitude"]),
+                        "confidence": r.get("confidence", "nominal"),
+                        "frp": float(r.get("frp") or 0.0),
+                        "satelit": "VIIRS_SNPP",
+                        "sumber": "firms",
+                    }
+                )
+        except Exception as exc:
+            print(f"Peringatan: gagal mengambil NASA FIRMS {area_name} ({exc}).")
+    return rows, any_ok
 
 
 def _load_sample_hotspots() -> list[dict]:
@@ -66,11 +76,13 @@ def _load_sample_hotspots() -> list[dict]:
 
 
 def load_hotspots() -> tuple[int, str]:
-    live_rows = _fetch_firms_live()
+    live_rows, firms_ok = _fetch_firms_live()
     if live_rows:
         rows = live_rows
         source_used = "firms"
     else:
+        if firms_ok:
+            print("Info: NASA FIRMS mengembalikan 0 titik panas aktif dalam 5 hari terakhir di Sumatera Selatan; memakai data sampel.")
         rows = _load_sample_hotspots()
         source_used = "sampel"
 
