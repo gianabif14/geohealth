@@ -12,6 +12,7 @@ import {
   clearRouteLine,
   drawRouteLine,
   focusFacilityMarker,
+  getMapViewport,
   initMap,
   invalidateMapSize,
   panMapTo,
@@ -27,6 +28,8 @@ import { appState } from "./state.js";
 let cachedHotspotsGeoJSON = null;
 let cachedKabupatenGeoJSON = null;
 let latestFaskesReqId = 0;
+let viewportTimer = null;
+let latestViewportReqId = 0;
 
 function setUiState(mode, errorMessage = "") {
   const elLoading = document.getElementById("state-loading");
@@ -212,6 +215,73 @@ function bindTopbarAndPresetEvents() {
       const nama = btn.dataset.nama || "Titik Pilihan";
       setActiveUserPoint(lat, lon, nama, null, true);
     });
+  });
+
+  // Pencarian lokasi nasional melalui Nominatim (OpenStreetMap)
+  const inputLokasi = document.getElementById("input-cari-lokasi");
+  const btnCariLokasi = document.getElementById("btn-cari-lokasi");
+  const statusCari = document.getElementById("status-cari-lokasi");
+  const hasilCari = document.getElementById("hasil-cari-lokasi");
+
+  async function searchNationalLocation() {
+    const query = inputLokasi.value.trim();
+    if (query.length < 3) {
+      statusCari.textContent = "Masukkan minimal 3 karakter nama kota atau lokasi.";
+      hasilCari.classList.add("hidden");
+      return;
+    }
+    statusCari.textContent = "Mencari lokasi...";
+    hasilCari.classList.add("hidden");
+    btnCariLokasi.disabled = true;
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        format: "jsonv2",
+        addressdetails: "1",
+        limit: "6",
+        countrycodes: "id",
+      });
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
+      if (!response.ok) throw new Error(`Layanan pencarian merespons ${response.status}`);
+      const results = await response.json();
+      hasilCari.innerHTML = "";
+      if (!results.length) {
+        statusCari.textContent = "Lokasi tidak ditemukan. Coba nama kota atau kabupaten lain.";
+        return;
+      }
+      results.forEach((place) => {
+        const li = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "location-result-btn";
+        button.textContent = place.display_name;
+        button.addEventListener("click", () => {
+          const lat = Number(place.lat);
+          const lon = Number(place.lon);
+          const label = place.name || place.display_name.split(",")[0];
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+          document.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
+          setActiveUserPoint(lat, lon, label, null, true);
+          statusCari.textContent = `Lokasi dipilih: ${place.display_name}`;
+          hasilCari.classList.add("hidden");
+        });
+        li.appendChild(button);
+        hasilCari.appendChild(li);
+      });
+      hasilCari.classList.remove("hidden");
+      statusCari.textContent = `${results.length} hasil ditemukan. Pilih salah satu lokasi.`;
+    } catch (error) {
+      statusCari.textContent = `Pencarian gagal: ${error.message}. Periksa koneksi internet.`;
+    } finally {
+      btnCariLokasi.disabled = false;
+    }
+  }
+  btnCariLokasi.addEventListener("click", searchNationalLocation);
+  inputLokasi.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchNationalLocation();
+    }
   });
 
   // Tombol 1-klik "Cari IGD terdekat" (saran pengembangan dari laporan LBS Hospital App)
@@ -437,7 +507,7 @@ async function loadAnalysisOnly() {
   if (box) {
     box.classList.remove("hidden", "state-error");
     title.textContent = "Memuat analisis akses H3...";
-    desc.textContent = "Menghitung skor keterbatasan akses dan peringkat wilayah Sumatera Selatan.";
+    desc.textContent = "Menghitung skor keterbatasan akses dan peringkat wilayah Indonesia.";
   }
   try {
     const analisis = await fetchAnalisisAkses();
@@ -467,36 +537,58 @@ function bindTabs() {
 
 async function initContextualLayersAndAnalysis() {
   try {
-    const [meta, hsGeo, kabGeo, analisis] = await Promise.all([
+    const [meta, analisis] = await Promise.all([
       fetchMeta(),
-      fetchHotspotsGeoJSON(appState.layers.hotspotDays),
-      fetchKabupatenGeoJSON(),
       fetchAnalisisAkses(),
     ]);
-
-    cachedHotspotsGeoJSON = hsGeo;
-    cachedKabupatenGeoJSON = kabGeo;
     appState.analysisData = analisis;
-
-    renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
-    renderKabupatenLayer(cachedKabupatenGeoJSON, appState.layers.showKabupaten);
-
     renderAnalysisTables(analisis, (cell) => {
       panMapTo(cell.centroid_lat, cell.centroid_lon, 11);
     });
-
     const footnote = document.getElementById("teks-meta-ringkas");
-    footnote.textContent = `${meta.total_faskes} faskes (${Object.keys(meta.faskes_per_sumber).join(", ")}) \u00b7 ${meta.total_hotspot} hotspot 7 hari (sumber: ${Object.keys(meta.hotspot_per_sumber).join(", ")}) \u00b7 Kapasitas: Data simulasi berlabel.`;
+    footnote.textContent = `${meta.total_faskes} faskes (${Object.keys(meta.faskes_per_sumber).join(", ")}) · ${meta.total_hotspot} hotspot 7 hari (sumber: ${Object.keys(meta.hotspot_per_sumber).join(", ")}) · Cakupan: Indonesia · Kapasitas: Data simulasi berlabel.`;
   } catch (_err) {
     // Lapisan kontekstual gagal tidak memblokir pencarian utama
   }
+}
+
+function scheduleViewportLayers({ bbox, zoom }) {
+  window.clearTimeout(viewportTimer);
+  viewportTimer = window.setTimeout(async () => {
+    const requestId = ++latestViewportReqId;
+    try {
+      const hsGeo = await fetchHotspotsGeoJSON(appState.layers.hotspotDays, bbox);
+      if (requestId !== latestViewportReqId) return;
+      cachedHotspotsGeoJSON = hsGeo;
+      renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
+    } catch (_err) {
+      // Pertahankan layer terakhir bila jaringan sedang bermasalah.
+    }
+
+    if (zoom >= 7) {
+      try {
+        const kabGeo = await fetchKabupatenGeoJSON();
+        if (requestId !== latestViewportReqId) return;
+        cachedKabupatenGeoJSON = kabGeo;
+        const viewport = getMapViewport();
+      renderKabupatenLayer(
+        cachedKabupatenGeoJSON,
+        appState.layers.showKabupaten && (viewport?.zoom ?? 0) >= 7
+      );
+      } catch (_err) {
+        // Batas administrasi bersifat kontekstual dan tidak memblokir peta.
+      }
+    } else {
+      renderKabupatenLayer(null, false);
+    }
+  }, 400);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   initMap(appState.userLat, appState.userLon, (lat, lon) => {
     document.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
     setActiveUserPoint(lat, lon, "Titik Pilihan Peta", null, false);
-  });
+  }, scheduleViewportLayers);
 
   bindTabs();
   bindTopbarAndPresetEvents();
@@ -505,7 +597,11 @@ window.addEventListener("DOMContentLoaded", () => {
     onLocalSearchChange: () => refreshDisplayedListAndMarkers(),
     onLayerToggle: () => {
       renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
-      renderKabupatenLayer(cachedKabupatenGeoJSON, appState.layers.showKabupaten);
+      const viewport = getMapViewport();
+      renderKabupatenLayer(
+        cachedKabupatenGeoJSON,
+        appState.layers.showKabupaten && (viewport?.zoom ?? 0) >= 7
+      );
       if (appState.analysisData) {
         const isAnalisisTab = !document.getElementById("pane-analisis").classList.contains("hidden");
         renderH3CellsLayer(
@@ -516,7 +612,11 @@ window.addEventListener("DOMContentLoaded", () => {
     },
     onHotspotDaysChange: async () => {
       try {
-        cachedHotspotsGeoJSON = await fetchHotspotsGeoJSON(appState.layers.hotspotDays);
+        const viewport = getMapViewport();
+        cachedHotspotsGeoJSON = await fetchHotspotsGeoJSON(
+          appState.layers.hotspotDays,
+          viewport?.bbox || null
+        );
         renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
       } catch (_err) {
         // Ignore transient network error

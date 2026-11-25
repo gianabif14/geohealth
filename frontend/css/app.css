@@ -1205,3 +1205,12 @@ select:disabled {
     transition: none;
   }
 }
+
+/* Pencarian kota/lokasi nasional */
+.location-search { margin: 12px 0 14px; }
+.location-search-row { display: flex; gap: 8px; align-items: stretch; }
+.location-search-row .text-input { min-width: 0; flex: 1; }
+.location-search-results { list-style: none; margin: 8px 0 0; padding: 0; border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; background: #fff; }
+.location-search-results li + li { border-top: 1px solid var(--border-soft); }
+.location-result-btn { display: block; width: 100%; padding: 10px 12px; border: 0; background: #fff; color: var(--text-main); text-align: left; cursor: pointer; font: inherit; font-size: .84rem; }
+.location-result-btn:hover, .location-result-btn:focus { background: var(--green-tint); outline: none; }
