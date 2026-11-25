@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoHealth: Peta Fasilitas Kesehatan &amp; Mitigasi Karhutla Sumatera Selatan</title>
+  <title>GeoHealth Indonesia | Peta Fasilitas Kesehatan &amp; Mitigasi Karhutla</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%2314533C'/%3E%3Cpath d='M12 6v12M6 12h12' stroke='%23FFFFFF' stroke-width='2.8'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://cdn.tailwindcss.com" defer></script>
   <link rel="stylesheet" href="/css/app.css">
   <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
   <script type="module" src="/js/main.js"></script>
 </head>
 <body class="bg-[#EDF2EF] text-[#18221D] antialiased overflow-hidden">
@@ -54,8 +57,8 @@
 
   <!-- Main Full-Bleed Map Workspace -->
   <main class="workspace-shell" id="main-content">
-    <section class="map-stage" aria-label="Peta interaktif Sumatera Selatan">
-      <div id="peta-utama" class="map-canvas" tabindex="0" aria-label="Kanvas peta Leaflet Sumatera Selatan"></div>
+    <section class="map-stage" aria-label="Peta interaktif Indonesia">
+      <div id="peta-utama" class="map-canvas" tabindex="0" aria-label="Kanvas peta Leaflet Indonesia"></div>
 
       <!-- Top-Left Floating Map Controls (Fullscreen + Segmented Basemap Switcher) -->
       <div class="map-top-controls" role="toolbar" aria-label="Kontrol tampilan peta">
@@ -154,7 +157,17 @@
                   <span class="loc-summary-label">Lokasi aktif</span>
                   <span id="teks-koordinat" class="loc-summary-coords">Palembang (-2.976, 104.752)</span>
                 </div>
-                <p class="loc-hint">Klik peta untuk memindahkan titik atau pilih wilayah rawan karhutla:</p>
+                <p class="loc-hint">Cari kota atau lokasi di seluruh Indonesia, gunakan GPS, atau klik peta untuk menentukan titik acuan.</p>
+                <div class="location-search">
+                  <label for="input-cari-lokasi" class="field-label">Cari kota / lokasi di Indonesia</label>
+                  <div class="location-search-row">
+                    <input id="input-cari-lokasi" class="text-input" type="search" placeholder="Contoh: Makassar, Sulawesi Selatan" autocomplete="off">
+                    <button id="btn-cari-lokasi" type="button" class="btn-primary-sm">Cari</button>
+                  </div>
+                  <p id="status-cari-lokasi" class="loc-hint" role="status" aria-live="polite">Pencarian menggunakan OpenStreetMap Nominatim.</p>
+                  <ul id="hasil-cari-lokasi" class="location-search-results hidden" aria-label="Hasil pencarian lokasi"></ul>
+                </div>
+                <p class="loc-hint">Lokasi cepat:</p>
                 <div class="preset-row" role="group" aria-label="Lokasi uji cepat wilayah rawan karhutla">
                   <button type="button" class="chip-btn active" data-lat="-2.9760" data-lon="104.7520" data-nama="Palembang">Palembang</button>
                   <button type="button" class="chip-btn" data-lat="-3.3912" data-lon="104.8305" data-nama="Kayuagung (OKI)">Kayuagung</button>
@@ -285,7 +298,7 @@
               <div id="acc-hasil-body" class="card-body">
                 <div id="state-loading" class="ui-state-box hidden" role="status" aria-live="polite">
                   <p class="state-title">Memuat daftar fasilitas kesehatan...</p>
-                  <p class="state-desc">Menghitung jarak garis lurus (Haversine) dan menyaring ketersediaan layanan di Sumatera Selatan.</p>
+                  <p class="state-desc">Menghitung jarak garis lurus (Haversine) dan menyaring ketersediaan layanan di Indonesia.</p>
                 </div>
 
                 <div id="state-error" class="ui-state-box state-error hidden" role="alert">
@@ -309,7 +322,7 @@
           <section id="pane-analisis" role="tabpanel" aria-labelledby="tab-btn-analisis" class="tab-pane hidden">
             <div id="analisis-state-box" class="ui-state-box hidden" role="status" aria-live="polite">
               <p class="state-title" id="analisis-state-title">Memuat analisis akses H3...</p>
-              <p class="state-desc" id="analisis-state-desc">Menghitung skor keterbatasan akses dan peringkat wilayah Sumatera Selatan.</p>
+              <p class="state-desc" id="analisis-state-desc">Menghitung skor keterbatasan akses dan peringkat wilayah Indonesia.</p>
             </div>
 
             <div class="panel-card">
@@ -385,23 +398,29 @@
         </button>
       </div>
       <div class="dialog-content">
-        <h3>1. Perhitungan Jarak dan Rute</h3>
+        <h3>1. Cakupan Wilayah Indonesia</h3>
+        <p>
+          GeoHealth dirancang untuk menampilkan informasi fasilitas kesehatan dan titik panas di seluruh Indonesia. Peta memuat data hotspot sesuai area yang sedang terlihat (viewport) agar proses pemuatan lebih ringan. Batas administrasi kabupaten/kota ditampilkan ketika peta diperbesar ke tingkat zoom 7 atau lebih.
+        </p>
+
+        <h3>2. Perhitungan Jarak dan Rute</h3>
         <p>
           Pencarian fasilitas kesehatan terdekat dihitung menggunakan rumus <strong>Haversine</strong> dan geodesik ellipsoid WGS84 dalam satuan meter (bukan derajat atau proyeksi Web Mercator EPSG:3857). Arah kompas dihitung memakai azimuth balik geodesik (<code>pyproj.Geod</code> / <code>ST_Azimuth</code>). Rute jalan raya disediakan sebagai fitur opsional melalui layanan publik OSRM dengan cadangan garis lurus apabila kuota layanan sedang penuh.
         </p>
 
-        <h3>2. Transparansi Sumber Data &amp; Simulasi</h3>
+        <h3>3. Transparansi Sumber Data &amp; Simulasi</h3>
         <p>
-          Lokasi rumah sakit, puskesmas, dan klinik berasal dari data OpenStreetMap dan daftar terverifikasi Sumatera Selatan (dapat ditambah melalui impor CSV di <code>data/custom/</code>). Karena data ketersediaan tempat tidur, stok oksigen, dan dokter jaga belum terhubung ke API real-time seluruh rumah sakit, nilai kapasitas tersebut dibangkitkan dengan generator deterministik dan selalu diberi label eksplisit <strong>Data simulasi</strong> beserta waktu pembaruannya.
+          Lokasi rumah sakit, puskesmas, dan klinik berasal dari data OpenStreetMap dan daftar terverifikasi di Indonesia (dapat ditambah melalui impor CSV di <code>data/custom/</code>). Karena data ketersediaan tempat tidur, stok oksigen, dan dokter jaga belum terhubung ke API real-time seluruh rumah sakit, nilai kapasitas tersebut dibangkitkan dengan generator deterministik dan selalu diberi label eksplisit <strong>Data simulasi</strong> beserta waktu pembaruannya.
         </p>
 
-        <h3>3. Batasan Data Titik Panas (Hotspot)</h3>
+        <h3>4. Batasan Data Titik Panas (Hotspot)</h3>
         <p>
           Titik panas satelit (VIIRS/MODIS NASA FIRMS atau sampel berlabel) merupakan indikator anomali suhu permukaan sebagai konteks risiko wilayah, bukan bukti langsung kebakaran aktif ataupun kepekatan asap di permukaan tanah.
         </p>
 
-        <h3>4. Pelindungan Privasi Lokasi (UU PDP No. 27 Tahun 2022)</h3>
+        <h3>5. Pelindungan Privasi Lokasi (UU PDP No. 27 Tahun 2022)</h3>
         <ul class="dialog-list">
+          <li><strong>Cakupan validasi:</strong> titik koordinat yang dipakai untuk pencarian dibatasi pada wilayah Indonesia sesuai konfigurasi backend.</li>
           <li><strong>Minimisasi data:</strong> secara bawaan koordinat Anda dibulatkan ke 3 angka desimal (presisi sekitar 110 meter) sebelum dikirim ke server.</li>
           <li><strong>Tanpa penyimpanan jejak:</strong> server hanya menggunakan koordinat sebagai parameter kueri sesaat, menambahkan header <code>Cache-Control: no-store</code>, dan menyensor parameter koordinat dari state log.</li>
           <li><strong>Accuracy gating &amp; Plausibility check:</strong> sistem memberi tahu Anda bila akurasi GPS perangkat lebih buruk dari 500 meter atau bila terdeteksi loncatan lokasi tidak wajar (&gt; 140 km/jam).</li>
@@ -411,7 +430,7 @@
   </dialog>
 
   <footer class="sr-only" role="contentinfo">
-    GeoHealth Sumatera Selatan. Proyek Sistem Informasi Geospasial &amp; Global Positioning System UPN Veteran Yogyakarta.
+    GeoHealth Indonesia. Proyek Sistem Informasi Geospasial &amp; Global Positioning System UPN Veteran Yogyakarta.
   </footer>
 </body>
 </html>

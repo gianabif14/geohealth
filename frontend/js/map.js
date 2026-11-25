@@ -56,12 +56,12 @@ function createUserLocationIcon() {
   });
 }
 
-export function initMap(initialLat, initialLon, onMapPickPoint) {
+export function initMap(initialLat, initialLon, onMapPickPoint, onViewportChange) {
   const L = window.L;
   mapInstance = L.map("peta-utama", {
     zoomControl: true,
     preferCanvas: true,
-  }).setView([initialLat, initialLon], 10);
+  }).setView([-2.5, 118.0], 4);
 
   // Gunakan basemap OpenStreetMap dan Esri Street dengan atribusi lengkap
   osmTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -80,9 +80,18 @@ export function initMap(initialLat, initialLon, onMapPickPoint) {
   kabupatenLayerGroup = L.layerGroup().addTo(mapInstance);
   h3LayerGroup = L.layerGroup().addTo(mapInstance);
   userLayerGroup = L.layerGroup().addTo(mapInstance);
-  hotspotLayerGroup = L.layerGroup().addTo(mapInstance);
+  hotspotLayerGroup = (L.markerClusterGroup ? L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 55 }) : L.layerGroup()).addTo(mapInstance);
   routeLayerGroup = L.layerGroup().addTo(mapInstance);
-  faskesLayerGroup = L.layerGroup().addTo(mapInstance);
+  faskesLayerGroup = (L.markerClusterGroup ? L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 55 }) : L.layerGroup()).addTo(mapInstance);
+
+  const notifyViewport = () => {
+    if (!onViewportChange) return;
+    const b = mapInstance.getBounds();
+    const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(",");
+    onViewportChange({ bbox, zoom: mapInstance.getZoom() });
+  };
+  mapInstance.on("moveend zoomend", notifyViewport);
+  mapInstance.whenReady(notifyViewport);
 
   mapInstance.on("click", (ev) => {
     if (onMapPickPoint) {
@@ -91,6 +100,16 @@ export function initMap(initialLat, initialLon, onMapPickPoint) {
   });
 
   return mapInstance;
+}
+
+
+export function getMapViewport() {
+  if (!mapInstance) return null;
+  const bounds = mapInstance.getBounds();
+  return {
+    bbox: [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(","),
+    zoom: mapInstance.getZoom(),
+  };
 }
 
 export function renderUserConcentricRings(lat, lon, radiusKm, accuracyM = null) {
@@ -160,7 +179,7 @@ export function renderFacilitiesOnMap(facilities, selectedId, onSelectFacility, 
     popupDiv.innerHTML = `
       <div style="font-weight:800;font-size:0.96rem;margin-bottom:4px;">${escapeHtml(f.nama)}</div>
       <div style="font-size:0.82rem;color:#4A524D;margin-bottom:6px;">
-        ${escapeHtml(f.alamat || f.kabupaten || "Sumatera Selatan")}<br>
+        ${escapeHtml(f.alamat || f.kabupaten || "Indonesia")}<br>
         <strong>Jarak garis lurus:</strong> ${distKm} km (${escapeHtml(f.arah_kompas || "-")})
       </div>
       <div style="font-size:0.82rem;margin-bottom:6px;">
@@ -222,14 +241,16 @@ export function renderHotspotsLayer(geojson, visible = true) {
   geojson.features.forEach((feat) => {
     const [lon, lat] = feat.geometry.coordinates;
     const p = feat.properties;
-    const marker = L.circleMarker([lat, lon], {
-      radius: p.confidence === "high" ? 7 : 5.5,
-      color: "#FFF3EB",
-      weight: 1.5,
-      fillColor: "#B83A14",
-      fillOpacity: 0.88,
+    const markerSize = p.confidence === "high" ? 16 : 13;
+    const marker = L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: "hotspot-cluster-marker",
+        html: `<span style="display:block;width:${markerSize}px;height:${markerSize}px;border:2px solid #FFF3EB;border-radius:50%;background:#B83A14;box-shadow:0 1px 5px rgba(0,0,0,.35)"></span>`,
+        iconSize: [markerSize, markerSize],
+        iconAnchor: [markerSize / 2, markerSize / 2],
+      }),
     });
-    const regionFallback = lon >= 108.0 ? "Kalimantan" : "Sumatera Selatan";
+    const regionFallback = "Wilayah tidak tersedia";
     marker.bindPopup(
       `<strong>Titik Panas Satelit (${escapeHtml(p.satelit)})</strong><br>` +
       `Wilayah: ${escapeHtml(p.kabupaten || regionFallback)}<br>` +
@@ -279,7 +300,7 @@ export function renderH3CellsLayer(cells, visible = true) {
     });
     poly.bindPopup(
       `<strong>Sel H3 ${escapeHtml(c.h3_index)}</strong><br>` +
-      `Wilayah: ${escapeHtml(c.kabupaten || "Sumatera Selatan")}<br>` +
+      `Wilayah: ${escapeHtml(c.kabupaten || "Indonesia")}<br>` +
       `Skor akses terbatas: <strong>${c.skor} / 100 (${escapeHtml(c.kategori.toUpperCase())})</strong><br>` +
       `Hotspot 7 hari: ${c.n_hotspot} titik<br>` +
       `Jarak ke faskes siap (IGD+Oksigen): ${c.jarak_faskes_siap_km} km<br>` +

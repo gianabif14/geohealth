@@ -39,7 +39,7 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
           <span class="card-rank-tag">${escapeHtml(rankText)}</span>
           <h3 class="card-name">${escapeHtml(f.nama)}</h3>
           <span class="card-meta-line">
-            ${escapeHtml(JENIS_LABEL[f.jenis] || f.jenis)} &middot; ${escapeHtml(f.kabupaten || "Sumatera Selatan")}
+            ${escapeHtml(JENIS_LABEL[f.jenis] || f.jenis)} &middot; ${escapeHtml(f.kabupaten || "Indonesia")}
           </span>
           <span class="card-meta-line">${escapeHtml(f.alamat || "Alamat jalan sesuai titik peta")}</span>
         </div>
@@ -161,7 +161,7 @@ export function renderAnalysisTables(analysisData, onFocusH3Cell) {
     const prioClass = `prio-${c.kategori}`;
     btn.innerHTML = `
       <div>
-        <strong>${escapeHtml(c.kabupaten || "Sumatera Selatan")}</strong> (H3: <code>${escapeHtml(c.h3_index)}</code>)<br>
+        <strong>${escapeHtml(c.kabupaten || "Indonesia")}</strong> (H3: <code>${escapeHtml(c.h3_index)}</code>)<br>
         <span style="font-size:0.82rem;color:#4A524D;">
           Hotspot: ${c.n_hotspot} titik &middot; Jarak faskes siap: ${c.jarak_faskes_siap_km} km (${escapeHtml(c.faskes_terdekat_nama || "-")})
         </span>

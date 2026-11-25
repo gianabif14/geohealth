@@ -35,14 +35,18 @@ export async function fetchNearestFaskes(state) {
   return body;
 }
 
-export async function fetchHotspotsGeoJSON(days = 7) {
-  const res = await fetch(`/api/hotspot?hari=${days}`);
+export async function fetchHotspotsGeoJSON(days = 7, bbox = null) {
+  const params = new URLSearchParams({ hari: String(days) });
+  if (bbox) params.set("bbox", bbox);
+  const res = await fetch(`/api/hotspot?${params.toString()}`);
   if (!res.ok) throw new Error(`Gagal memuat titik panas (${res.status})`);
   return res.json();
 }
 
-export async function fetchKabupatenGeoJSON() {
-  const res = await fetch("/api/kabupaten");
+export async function fetchKabupatenGeoJSON(bbox = null) {
+  const params = new URLSearchParams();
+  if (bbox) params.set("bbox", bbox);
+  const res = await fetch(`/api/kabupaten${params.toString() ? `?${params.toString()}` : ""}`);
   if (!res.ok) throw new Error(`Gagal memuat batas kabupaten (${res.status})`);
   return res.json();
 }
