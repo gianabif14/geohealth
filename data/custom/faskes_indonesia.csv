@@ -1,0 +1,105 @@
+nama,jenis,lat,lon,alamat,telepon,igd_24jam,oksigen,dokter_jaga,tt_total,tt_tersedia,catatan_layanan
+RSUD Dr. Zainoel Abidin Banda Aceh,rumah_sakit,5.5653,95.3375,"Jl. Tgk. Daud Beureueh No. 108, Kota Banda Aceh, Aceh",(0651) 34565,true,true,true,310,42,RS Rujukan Utama Provinsi Aceh & IGD Pernapasan 24 Jam
+RSUD Cut Meutia Lhokseumawe,rumah_sakit,5.1342,97.1524,"Jl. Banda Aceh-Medan KM 6, Buket Rata, Kota Lhokseumawe, Aceh",(0645) 43012,true,true,true,180,24,IGD 24 jam & terapi oksigen ISPA
+Puskesmas Baiturrahman Banda Aceh,puskesmas,5.5512,95.3189,"Kec. Baiturrahman, Kota Banda Aceh, Aceh",(0651) 22411,true,true,true,12,4,Puskesmas triase awal ISPA & oksigen
+RSUP H. Adam Malik Medan,rumah_sakit,3.5186,98.6095,"Jl. Bunga Lau No. 17, Kemenangan Tani, Kota Medan, Sumatera Utara",(061) 8360051,true,true,true,450,58,RSUP Rujukan Nasional Sumatera Utara & IGD Paru 24 Jam
+RSUD Dr. Pirngadi Kota Medan,rumah_sakit,3.5968,98.6852,"Jl. Prof. H. M. Yamin SH No. 47, Perintis, Kec. Medan Timur, Kota Medan",(061) 4158701,true,true,true,280,36,"IGD 24 jam, nebulizer & terapi oksigen ISPA tersedia"
+RS Siloam Dhirga Surya Medan,rumah_sakit,3.5882,98.6738,"Jl. Imam Bonjol No. 6, Petisah Tengah, Kec. Medan Petisah, Kota Medan",(061) 88881900,true,true,true,210,28,IGD 24 jam & layanan darurat pernapasan
+RS Columbia Asia Medan,rumah_sakit,3.5931,98.6709,"Jl. Listrik No. 2A, Petisah Tengah, Kec. Medan Petisah, Kota Medan",(061) 4566368,true,true,true,190,22,IGD 24 jam & unit oksigen gawat darurat
+Puskesmas Medan Petisah,puskesmas,3.5914,98.6621,"Jl. Sekip, Kec. Medan Petisah, Kota Medan, Sumatera Utara",(061) 4521810,true,true,true,10,3,Posko triase ISPA & oksigen darurat Kota Medan
+Klinik Pratama Medan Sehat,klinik,3.5985,98.678,"Jl. Sutomo, Kec. Medan Timur, Kota Medan, Sumatera Utara",(061) 4532190,false,true,true,6,2,Pemeriksaan pernapasan dasar & nebulizer
+RSUP Dr. M. Djamil Padang,rumah_sakit,-0.9433,100.3669,"Jl. Perintis Kemerdekaan, Sawahan Timur, Kota Padang, Sumatera Barat",(0751) 32371,true,true,true,380,48,RSUP Rujukan Sumatera Barat & IGD 24 jam
+RSUD Dr. Achmad Mochtar Bukittinggi,rumah_sakit,-0.2995,100.3712,"Jl. Dr. Abdul Rivai No. 1, Kota Bukittinggi, Sumatera Barat",(0752) 21720,true,true,true,220,30,IGD 24 jam & terapi oksigen ISPA
+Puskesmas Padang Pasir,puskesmas,-0.9381,100.3584,"Kec. Padang Barat, Kota Padang, Sumatera Barat",(0751) 31802,true,true,true,12,4,Puskesmas siaga asap & ISPA
+RSUD Arifin Achmad Provinsi Riau,rumah_sakit,0.5236,101.4518,"Jl. Diponegoro No. 2, Sumahilang, Kota Pekanbaru, Riau",(0761) 21618,true,true,true,340,45,RS Rujukan Utama Mitigasi Karhutla Provinsi Riau
+RS Awal Bros Pekanbaru,rumah_sakit,0.4981,101.4552,"Jl. Jenderal Sudirman No. 117, Kota Pekanbaru, Riau",(0761) 47333,true,true,true,240,31,IGD 24 jam & ruang perawatan oksigen ISPA
+RSUD Kota Dumai,rumah_sakit,1.6785,101.4482,"Jl. Tanjung Jati No. 4, Buluh Kasap, Kota Dumai, Riau",(0765) 440992,true,true,true,195,25,IGD 24 jam & posko rujukan asap pesisir Riau
+RSUD Bengkalis,rumah_sakit,1.4692,102.1154,"Jl. Kelapapati Tengah No. 9, Kab. Bengkalis, Riau",(0766) 21118,true,true,true,160,21,IGD 24 jam & penanganan paparan asap karhutla
+Puskesmas Simpang Tiga Pekanbaru,puskesmas,0.4621,101.4589,"Jl. Kaharuddin Nasution, Bukit Raya, Kota Pekanbaru, Riau",(0761) 674811,true,true,true,16,6,Puskesmas rawat inap & rumah singgah oksigen karhutla
+RSUD Raja Ahmad Tabib Tanjungpinang,rumah_sakit,0.9082,104.5012,"Jl. WR. Supratman KM 8, Kota Tanjungpinang, Kepulauan Riau",(0771) 7335203,true,true,true,200,27,IGD 24 jam & terapi oksigen
+RSBP Batam,rumah_sakit,1.1248,103.9301,"Jl. Dr. Ciptomangunkusumo No. 1, Sekupang, Kota Batam, Kepulauan Riau",(0778) 322121,true,true,true,250,33,IGD 24 jam & layanan paru
+RSUD Raden Mattaher Provinsi Jambi,rumah_sakit,-1.6042,103.5801,"Jl. Letjen Suprapto No. 31, Telanaipura, Kota Jambi, Jambi",(0741) 61692,true,true,true,310,40,RS Rujukan Utama Mitigasi Asap Provinsi Jambi
+RSUD H. Abdul Manap Kota Jambi,rumah_sakit,-1.6358,103.6064,"Jl. SK. Rd. Syahbuddin, Mayang Mangurai, Kota Jambi, Jambi",(0741) 5910180,true,true,true,185,24,IGD 24 jam & unit oksigen ISPA
+RSUD Ahmad Ripin Muaro Jambi,rumah_sakit,-1.4328,103.4892,"Komp. Perkantoran Bukit Cinto Kenang, Sengeti, Kab. Muaro Jambi",(0741) 590012,true,true,true,140,18,IGD 24 jam & rujukan karhutla Muaro Jambi
+Puskesmas Putri Ayu Kota Jambi,puskesmas,-1.6115,103.5912,"Jl. Slamet Riyadi, Kec. Danau Sipin, Kota Jambi",(0741) 62409,true,true,true,14,5,Posko oksigen darurat & triase ISPA
+RSUD Dr. M. Yunus Bengkulu,rumah_sakit,-3.8291,102.3185,"Jl. Bhayangkara, Sidomulyo, Kota Bengkulu, Bengkulu",(0736) 52004,true,true,true,230,30,RS Rujukan Provinsi Bengkulu & IGD 24 jam
+RSUP Dr. Mohammad Hoesin Palembang,rumah_sakit,-2.96639,104.74972,"Jl. Jenderal Sudirman KM 3.5, Sekip Jaya, Kec. Kemuning, Kota Palembang",(0711) 354088,true,true,true,480,62,"RSUP Rujukan Utama Sumatera Selatan, IGD & Terapi Oksigen 24 Jam"
+RSUD Siti Fatimah Provinsi Sumatera Selatan,rumah_sakit,-2.94695,104.73812,"Jl. Kol. H. Burlian KM 6, Suka Bangun, Kec. Sukarami, Kota Palembang",(0711) 5718883,true,true,true,290,38,"IGD 24 jam, nebulizer & terapi oksigen ISPA tersedia"
+RSUD Palembang BARI,rumah_sakit,-3.00514,104.76278,"Jl. Panca Usaha No. 1, 5 Ulu, Kec. Seberang Ulu I, Kota Palembang",(0711) 519211,true,true,true,240,32,IGD 24 jam & layanan gawat darurat pernapasan
+RS Khusus Paru Provinsi Sumatera Selatan,rumah_sakit,-2.9718,104.7429,"Jl. Merdeka No. 10, Talang Semut, Kota Palembang",(0711) 352010,true,true,true,120,20,RS Khusus Paru & Pusat Penanganan Paparan Asap Karhutla
+RSUD Kayuagung,rumah_sakit,-3.3912,104.8305,"Jl. Lintas Timur Sumatera, Jua Jua, Kec. Kayuagung, Kab. Ogan Komering Ilir",(0712) 321010,true,true,true,180,24,IGD 24 jam & rujukan ISPA Ogan Komering Ilir
+RSUD Banyuasin,rumah_sakit,-2.8856,104.3924,"Jl. Raya Palembang-Betung KM 48, Pangkalan Balai, Kab. Banyuasin",(0711) 7690015,true,true,true,160,22,IGD 24 jam & posko rujukan oksigen Banyuasin
+RSUD Sekayu Musi Banyuasin,rumah_sakit,-2.8851,103.8342,"Jl. Bupati Oesman Bakar, Kayuara, Kec. Sekayu, Kab. Musi Banyuasin",(0714) 321855,true,true,true,220,29,IGD 24 jam & rujukan pernapasan Musi Banyuasin
+RSUD Depati Hamzah Pangkalpinang,rumah_sakit,-2.1421,106.1154,"Jl. Soekarno Hatta, Bukitbesar, Kota Pangkalpinang, Kep. Bangka Belitung",(0717) 422693,true,true,true,190,26,IGD 24 jam & layanan oksigen
+RSUD Dr. H. Abdul Moeloek Provinsi Lampung,rumah_sakit,-5.4028,105.2586,"Jl. Dr. Rivai No. 6, Penengahan, Kota Bandar Lampung, Lampung",(0721) 703312,true,true,true,350,44,RS Rujukan Provinsi Lampung & IGD 24 jam
+Puskesmas Satelit Bandar Lampung,puskesmas,-5.4112,105.264,"Jl. Gajah Mada, Kota Bandar Lampung, Lampung",(0721) 253911,true,true,true,14,5,Puskesmas rawat inap & oksigen
+RSUD Banten,rumah_sakit,-6.1502,106.1724,"Jl. Syekh Nawawi Al-Bantani, Cipocok Jaya, Kota Serang, Banten",(0254) 8490911,true,true,true,250,34,IGD 24 jam & terapi oksigen
+RSUP Dr. Sitanala Tangerang,rumah_sakit,-6.1652,106.6241,"Jl. Dr. Sitanala No. 99, Neglasari, Kota Tangerang, Banten",(021) 5523059,true,true,true,220,29,RSUP Rujukan & IGD 24 jam
+RSUP Nasional Dr. Cipto Mangunkusumo (RSCM),rumah_sakit,-6.1972,106.8471,"Jl. Pangeran Diponegoro No. 71, Senen, Jakarta Pusat, DKI Jakarta",(021) 1500135,true,true,true,650,78,RSUP Rujukan Nasional & IGD Terpadu 24 Jam
+RSUP Persahabatan Jakarta (Pusat Respirasi Nasional),rumah_sakit,-6.2038,106.8839,"Jl. Persahabatan Raya No. 1, Rawamangun, Jakarta Timur, DKI Jakarta",(021) 4891708,true,true,true,380,52,Pusat Rujukan Respirasi Nasional & IGD Paru 24 Jam
+RSUD Tarakan Jakarta,rumah_sakit,-6.1714,106.8102,"Jl. Kyai Caringin No. 7, Cideng, Gambir, Jakarta Pusat, DKI Jakarta",(021) 3503003,true,true,true,290,35,IGD 24 jam & terapi oksigen
+Puskesmas Kecamatan Gambir,puskesmas,-6.1682,106.8165,"Jl. Tanah Abang I No. 10, Gambir, Jakarta Pusat, DKI Jakarta",(021) 3843980,true,true,true,16,6,Puskesmas 24 jam & oksigen darurat
+RSUP Dr. Hasan Sadikin Bandung,rumah_sakit,-6.8975,107.5989,"Jl. Pasteur No. 38, Sukajadi, Kota Bandung, Jawa Barat",(022) 2034953,true,true,true,520,64,RSUP Rujukan Jawa Barat & IGD 24 jam
+RS Paru Dr. H. A. Rotinsulu Bandung,rumah_sakit,-6.8742,107.6051,"Jl. Bukit Jarian No. 40, Cidadap, Kota Bandung, Jawa Barat",(022) 2034446,true,true,true,160,24,RS Khusus Paru & Respirasi
+Puskesmas Garuda Kota Bandung,puskesmas,-6.9125,107.5762,"Jl. Dadali No. 81, Andir, Kota Bandung, Jawa Barat",(022) 6013885,true,true,true,12,4,Puskesmas layanan 24 jam & oksigen
+RSUP Dr. Kariadi Semarang,rumah_sakit,-6.9939,110.4075,"Jl. Dr. Sutomo No. 16, Randusari, Kota Semarang, Jawa Tengah",(024) 8413476,true,true,true,540,68,RSUP Rujukan Jawa Tengah & IGD 24 jam
+RSUD Dr. Moewardi Surakarta,rumah_sakit,-7.5586,110.8421,"Jl. Kolonel Sutarto No. 132, Jebres, Kota Surakarta, Jawa Tengah",(0271) 634634,true,true,true,410,50,IGD 24 jam & instalasi oksigen sentral
+Puskesmas Pandanaran Semarang,puskesmas,-6.9875,110.4152,"Jl. Pandanaran No. 79, Kota Semarang, Jawa Tengah",(024) 8315513,true,true,true,14,5,Puskesmas rawat inap & triase ISPA
+RSUP Dr. Sardjito Yogyakarta,rumah_sakit,-7.7686,110.3733,"Jl. Kesehatan No. 1, Sekip, Sinduadi, Kab. Sleman, DI Yogyakarta",(0274) 587333,true,true,true,510,60,RSUP Rujukan DI Yogyakarta & IGD 24 jam
+RSUD Kota Yogyakarta (RS Jogja),rumah_sakit,-7.8251,110.3782,"Jl. Wirosaban No. 1, Sorosutan, Umbulharjo, Kota Yogyakarta",(0274) 371195,true,true,true,230,31,IGD 24 jam & layanan pernapasan
+RS Paru Respira Yogyakarta,rumah_sakit,-7.9024,110.3318,"Jl. Panembahan Senopati No. 4, Palbapang, Kab. Bantul, DI Yogyakarta",(0274) 367381,true,true,true,90,16,RS Khusus Paru & Gangguan Pernapasan
+Puskesmas Depok III Sleman,puskesmas,-7.7751,110.3918,"Jl. Komp. Colombo, Caturtunggal, Depok, Kab. Sleman, DI Yogyakarta",(0274) 512595,true,true,true,10,4,Puskesmas layanan pemeriksaan ISPA
+RSUD Dr. Soetomo Surabaya,rumah_sakit,-7.2681,112.7581,"Jl. Mayjen Prof. Dr. Moestopo No. 6-8, Airlangga, Kota Surabaya, Jawa Timur",(031) 5501078,true,true,true,680,82,RS Rujukan Utama Indonesia Timur & IGD 24 Jam
+RSUD Dr. Saiful Anwar Malang,rumah_sakit,-7.9725,112.6314,"Jl. Jaksa Agung Suprapto No. 2, Klojen, Kota Malang, Jawa Timur",(0341) 362101,true,true,true,420,52,IGD 24 jam & terapi oksigen
+Puskesmas Jagir Surabaya,puskesmas,-7.3012,112.7385,"Jl. Bendul Merisi No. 1, Wonokromo, Kota Surabaya, Jawa Timur",(031) 8416926,true,true,true,16,6,Puskesmas rawat inap 24 jam
+RSUP Prof. Dr. I.G.N.G. Ngoerah (Sanglah) Denpasar,rumah_sakit,-8.6758,115.2128,"Jl. Diponegoro, Dauh Puri Klod, Kota Denpasar, Bali",(0361) 227911,true,true,true,460,58,RSUP Rujukan Bali & Nusa Tenggara
+RSUD Wangaya Kota Denpasar,rumah_sakit,-8.6502,115.2145,"Jl. Kartini No. 133, Dauh Puri Kaja, Kota Denpasar, Bali",(0361) 222141,true,true,true,190,24,IGD 24 jam & oksigen
+RSUD Provinsi NTB Mataram,rumah_sakit,-8.6012,116.1425,"Jl. Prabu Rangkasari, Dasan Cermen, Kota Mataram, Nusa Tenggara Barat",(0370) 7502424,true,true,true,290,38,RS Rujukan Provinsi NTB & IGD 24 jam
+RSUD Prof. Dr. W. Z. Johannes Kupang,rumah_sakit,-10.1685,123.5862,"Jl.assen Dr. Moh. Hatta No. 19, Oetete, Kota Kupang, Nusa Tenggara Timur",(0380) 832892,true,true,true,260,34,RS Rujukan Provinsi NTT & IGD 24 jam
+RSUD Dr. Soedarso Pontianak,rumah_sakit,-0.0612,109.3498,"Jl. Dr. Soedarso No. 1, Bangka Belitung Laut, Kota Pontianak, Kalimantan Barat",(0561) 737701,true,true,true,340,44,RS Rujukan Utama Mitigasi Karhutla Kalimantan Barat
+RSUD Sultan Syarif Mohamad Alkadrie Pontianak,rumah_sakit,-0.0154,109.3082,"Jl. Kom Yos Sudarso, Sungai Beliung, Kota Pontianak, Kalimantan Barat",(0561) 777656,true,true,true,190,26,IGD 24 jam & terapi oksigen ISPA
+RSUD Kubu Raya,rumah_sakit,-0.1842,109.4215,"Kec. Sungai Raya, Kab. Kubu Raya, Kalimantan Barat",(0561) 6729100,true,true,true,130,18,IGD 24 jam & posko rujukan asap Kubu Raya
+Puskesmas Alianyang Pontianak,puskesmas,-0.0321,109.3295,"Jl. Alianyang, Kec. Pontianak Kota, Kota Pontianak, Kalimantan Barat",(0561) 734912,true,true,true,14,5,Posko oksigen darurat asap Pontianak
+RSUD dr. Doris Sylvanus Palangka Raya,rumah_sakit,-2.2089,113.9175,"Jl. Tambun Bungai No. 4, Langkai, Kec. Pahandut, Kota Palangka Raya, Kalimantan Tengah",(0536) 3224695,true,true,true,330,46,RS Rujukan Utama Mitigasi Karhutla Kalimantan Tengah & IGD 24 Jam
+RSUD Kota Palangka Raya,rumah_sakit,-2.1482,113.8495,"Jl. Tjilik Riwut KM 18.5, Kalampangan, Kota Palangka Raya, Kalimantan Tengah",(0536) 4279111,true,true,true,140,22,IGD 24 jam & ruang perawatan oksigen paparan asap
+RS Siloam Palangka Raya,rumah_sakit,-2.2264,113.9021,"Jl. RTA Milono KM 4 No. 425, Menteng, Kec. Jekan Raya, Kota Palangka Raya",(0536) 8001100,true,true,true,175,25,IGD 24 jam & layanan gawat darurat respirasi
+RSUD Pulang Pisau,rumah_sakit,-2.7542,114.258,"Jl. Trans Kalimantan, Mantaren I, Kec. Kahayan Hilir, Kab. Pulang Pisau",(0513) 61188,true,true,true,150,21,IGD 24 jam & rujukan karhutla lahan gambut Pulang Pisau
+RSUD dr. H. Soemarno Sosroatmodjo Kuala Kapuas,rumah_sakit,-3.0085,114.3842,"Jl. Tambun Bungai No. 16, Selat Tengah, Kab. Kapuas, Kalimantan Tengah",(0513) 21653,true,true,true,180,24,IGD 24 jam & terapi oksigen ISPA
+Puskesmas Pahandut Palangka Raya,puskesmas,-2.2051,113.9248,"Jl. Ahmad Yani, Pahandut, Kota Palangka Raya, Kalimantan Tengah",(0536) 3221840,true,true,true,16,6,Rumah singgah oksigen & triase ISPA karhutla
+Puskesmas Menteng Palangka Raya,puskesmas,-2.2241,113.9112,"Jl. Temanggung Tilung, Menteng, Kec. Jekan Raya, Kota Palangka Raya",(0536) 3230412,true,true,true,12,5,Posko oksigen darurat & nebulizer
+Klinik Pratama Betang Sehat Palangka Raya,klinik,-2.2185,113.9162,"Jl. G. Obos, Menteng, Kota Palangka Raya, Kalimantan Tengah",(0536) 3241190,false,true,true,6,2,Layanan pemeriksaan pernapasan dasar & oksigen
+RSUD Ulin Banjarmasin,rumah_sakit,-3.3228,114.6012,"Jl. Ahmad Yani KM 2.5 No. 43, Sungai Baru, Kota Banjarmasin, Kalimantan Selatan",(0511) 3252180,true,true,true,390,50,RS Rujukan Utama Kalimantan Selatan & IGD 24 Jam
+RSUD Idaman Kota Banjarbaru,rumah_sakit,-3.4612,114.8125,"Jl. Trikora No. 115, Guntungmanggis, Kota Banjarbaru, Kalimantan Selatan",(0511) 6749696,true,true,true,210,28,IGD 24 jam & rujukan ISPA koridor bandara Syamsudin Noor
+RSUD Ratu Zalecha Martapura,rumah_sakit,-3.4185,114.8492,"Jl. Menteri Empat, Martapura, Kab. Banjar, Kalimantan Selatan",(0511) 4721271,true,true,true,195,25,IGD 24 jam & terapi oksigen
+Puskesmas Cempaka Banjarmasin,puskesmas,-3.3241,114.5915,"Jl. Cempaka Besar, Banjarmasin Tengah, Kota Banjarmasin",(0511) 3354210,true,true,true,12,4,Puskesmas siaga ISPA & oksigen
+RSUD Abdoel Wahab Sjahranie Samarinda,rumah_sakit,-0.4765,117.1432,"Jl. Palang Merah Indonesia No. 1, Sidodadi, Kota Samarinda, Kalimantan Timur",(0541) 738118,true,true,true,380,48,RS Rujukan Utama Kalimantan Timur & IGD 24 Jam
+RSUD Dr. Kanujoso Djatiwibowo Balikpapan,rumah_sakit,-1.2165,116.8682,"Jl. MT Haryono No. 656, Batu Ampar, Kota Balikpapan, Kalimantan Timur",(0542) 873901,true,true,true,310,40,IGD 24 jam & unit oksigen gawat darurat
+RSUD Aji Muhammad Parikesit Tenggarong,rumah_sakit,-0.4312,117.0015,"Jl. Ratu Agung No. 1, Tenggarong Seberang, Kab. Kutai Kartanegara",(0541) 661015,true,true,true,220,29,IGD 24 jam & terapi oksigen
+Puskesmas Segiri Samarinda,puskesmas,-0.4892,117.1489,"Jl. Ramania, Sidodadi, Kec. Samarinda Ulu, Kota Samarinda",(0541) 741890,true,true,true,12,4,Puskesmas triase ISPA & oksigen
+RSUD dr. H. Jusuf SK Tarakan,rumah_sakit,3.3142,117.5915,"Jl. Pulau Irian No. 1, Kampung Satu Skip, Kota Tarakan, Kalimantan Utara",(0551) 21166,true,true,true,240,32,RS Rujukan Provinsi Kalimantan Utara & IGD 24 jam
+RSUP Prof. Dr. R. D. Kandou Manado,rumah_sakit,1.4542,124.8065,"Jl. Raya Tanawangko No. 56, Malalayang, Kota Manado, Sulawesi Utara",(0431) 8383058,true,true,true,440,56,RSUP Rujukan Sulawesi Utara & IGD 24 jam
+RSUD Prof. Dr. H. Aloei Saboe Gorontalo,rumah_sakit,0.5542,123.0815,"Jl. Prof. Dr. H. Aloei Saboe No. 92, Wongkaditi, Kota Gorontalo",(0435) 821924,true,true,true,230,30,IGD 24 jam & layanan oksigen
+RSUD Undata Provinsi Sulawesi Tengah,rumah_sakit,-0.8582,119.8842,"Jl. Trans Sulawesi, Tondo, Mantikulore, Kota Palu, Sulawesi Tengah",(0451) 4908020,true,true,true,290,38,RS Rujukan Provinsi Sulawesi Tengah & IGD 24 jam
+RSUD Provinsi Sulawesi Barat Mamuju,rumah_sakit,-2.6815,118.8924,"Jl. RE Martadinata, Simboro, Kab. Mamuju, Sulawesi Barat",(0426) 2323255,true,true,true,180,24,IGD 24 jam & terapi oksigen
+RSUP Dr. Wahidin Sudirohusodo Makassar,rumah_sakit,-5.1348,119.4932,"Jl. Perintis Kemerdekaan KM 11, Tamalanrea, Kota Makassar, Sulawesi Selatan",(0411) 584677,true,true,true,560,70,RSUP Rujukan Utama Kawasan Indonesia Timur & IGD 24 Jam
+RSUD Labuang Baji Provinsi Sulawesi Selatan,rumah_sakit,-5.1612,119.4185,"Jl. Dr. Ratulangi No. 81, Labuang Baji, Kec. Mamajang, Kota Makassar",(0411) 873482,true,true,true,260,34,"IGD 24 jam, nebulizer & terapi oksigen ISPA tersedia"
+RS Stella Maris Makassar,rumah_sakit,-5.1445,119.4082,"Jl. Somba Opu No. 273, Losari, Kec. Ujung Pandang, Kota Makassar",(0411) 854341,true,true,true,210,27,IGD 24 jam & perawatan respirasi
+RS Awal Bros Makassar,rumah_sakit,-5.1392,119.4365,"Jl. Jenderal Urip Sumoharjo No. 43, Karuwisi Utara, Kec. Panakkukang, Kota Makassar",(0411) 454567,true,true,true,220,29,IGD 24 jam & unit oksigen gawat darurat
+Puskesmas Kassi-Kassi Makassar,puskesmas,-5.1642,119.4398,"Jl. Tamalate I No. 43, Kassi-Kassi, Kec. Rappocini, Kota Makassar",(0411) 869812,true,true,true,16,6,Puskesmas rawat inap 24 jam & oksigen darurat
+Klinik Pratama Panakkukang Medika Makassar,klinik,-5.1489,119.4351,"Jl. Boulevard, Kec. Panakkukang, Kota Makassar, Sulawesi Selatan",(0411) 442910,false,true,true,6,2,Layanan pemeriksaan pernapasan dasar & nebulizer
+RSUD Bahteramas Provinsi Sulawesi Tenggara,rumah_sakit,-4.0215,122.5012,"Jl. Kapten Piere Tendean No. 50, Baruga, Kota Kendari, Sulawesi Tenggara",(0401) 3195611,true,true,true,270,35,RS Rujukan Provinsi Sulawesi Tenggara & IGD 24 jam
+RSUP Dr. Johannes Leimena Ambon,rumah_sakit,-3.6582,128.1915,"Jl. R. Suprapto No. 123, Rumah Tiga, Teluk Ambon, Kota Ambon, Maluku",(0911) 3839111,true,true,true,280,36,RSUP Rujukan Kepulauan Maluku & IGD 24 jam
+RSUD Dr. M. Haulussy Ambon,rumah_sakit,-3.7042,128.1654,"Jl. Dr. Kayadoe, Benteng, Nusaniwe, Kota Ambon, Maluku",(0911) 344871,true,true,true,210,28,IGD 24 jam & terapi oksigen
+RSUD Dr. H. Chasan Boesoirie Ternate,rumah_sakit,0.7885,127.3762,"Jl. Cempaka, Tanah Tinggi Barat, Kota Ternate, Maluku Utara",(0921) 3121281,true,true,true,200,26,RS Rujukan Provinsi Maluku Utara & IGD 24 jam
+RSUD Provinsi Papua Barat Manokwari,rumah_sakit,-0.8712,134.0582,"Jl. Brigjen Marinir Abraham O. Atururi, Kab. Manokwari, Papua Barat",(0986) 211740,true,true,true,180,24,IGD 24 jam & layanan oksigen
+RSUD Sele Be Solu Kota Sorong,rumah_sakit,-0.8924,131.2815,"Jl. Kesehatan No. 36, Klasaman, Kota Sorong, Papua Barat Daya",(0951) 321850,true,true,true,190,25,IGD 24 jam & perawatan pernapasan
+RSUD Jayapura (Dok II),rumah_sakit,-2.5318,140.7156,"Jl. Kesehatan I No. 1, Dok II, Bhayangkara, Kec. Jayapura Utara, Kota Jayapura, Papua",(0967) 533616,true,true,true,320,42,"RS Rujukan Utama Tanah Papua, IGD 24 Jam & Terapi Oksigen"
+RSUD Abepura Jayapura,rumah_sakit,-2.6085,140.6692,"Jl. Kesehatan II, Yobe, Kec. Abepura, Kota Jayapura, Papua",(0967) 581064,true,true,true,210,28,IGD 24 jam & layanan oksigen ISPA
+RS Provita Jayapura,rumah_sakit,-2.5412,140.7089,"Jl. Sam Ratulangi No. 39, Bayangkara, Kec. Jayapura Utara, Kota Jayapura, Papua",(0967) 5162888,true,true,true,150,21,IGD 24 jam & unit oksigen gawat darurat
+Puskesmas Jayapura Utara,puskesmas,-2.5295,140.7192,"Jl. Percetakan, Gurabesi, Kec. Jayapura Utara, Kota Jayapura, Papua",(0967) 534112,true,true,true,12,4,Puskesmas triase ISPA & oksigen Kota Jayapura
+Klinik Pratama Cenderawasih Sehat Jayapura,klinik,-2.5364,140.7128,"Jl. Ahmad Yani, Kec. Jayapura Utara, Kota Jayapura, Papua",(0967) 532890,false,true,true,6,2,Layanan pemeriksaan pernapasan dasar
+RSUD Nabire,rumah_sakit,-3.3642,135.4985,"Jl. R.E. Martadinata, Siriwini, Kab. Nabire, Papua Tengah",(0984) 21845,true,true,true,170,22,RS Rujukan Papua Tengah & IGD 24 jam
+RSUD Kabupaten Mimika Timika,rumah_sakit,-4.5382,136.8892,"Jl. Yos Sudarso KM 4, Kab. Mimika, Papua Tengah",(0901) 322510,true,true,true,200,27,IGD 24 jam & terapi oksigen
+RSUD Wamena,rumah_sakit,-4.0958,138.9512,"Jl. Trikora No. 9, Wamena Kota, Kab. Jayawijaya, Papua Pegunungan",(0969) 31082,true,true,true,165,21,RS Rujukan Papua Pegunungan & IGD 24 jam
+RSUD Merauke,rumah_sakit,-8.4942,140.4015,"Jl. Soekarjo Wiryopranoto No. 1, Maro, Kab. Merauke, Papua Selatan",(0971) 321125,true,true,true,210,28,RS Rujukan Papua Selatan & penanganan asap karhutla sabana Merauke
+Puskesmas Mopah Baru Merauke,puskesmas,-8.5082,140.4125,"Kel. Rimba Jaya, Kab. Merauke, Papua Selatan",(0971) 322810,true,true,true,12,4,Posko oksigen darurat asap Merauke
