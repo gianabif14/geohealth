@@ -1,5 +1,5 @@
 from typing import Any
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from app.db import query_faskes_list, query_hotspots, query_kabupaten_geojson
 from app.schemas import AnalisisAksesResponseOut
 from app.services.akses import compute_h3_access_scores
@@ -8,7 +8,9 @@ router = APIRouter(prefix="/api/analisis", tags=["analisis"])
 
 
 @router.get("/akses", response_model=AnalisisAksesResponseOut)
-def get_analisis_akses_terbatas() -> dict[str, Any]:
+def get_analisis_akses_terbatas(
+    limit: int = Query(default=50, ge=1, le=500),
+) -> dict[str, Any]:
     all_faskes = query_faskes_list()
     ready_faskes = [
         f for f in all_faskes if f["status"]["igd_24jam"] and f["status"]["oksigen"]
@@ -89,5 +91,5 @@ def get_analisis_akses_terbatas() -> dict[str, Any]:
             "Digunakan sebagai alat bantu penentuan kandidat posko kesehatan darurat."
         ),
         "kabupaten_ranking": kab_ranking,
-        "sel_h3": h3_cells,
+        "sel_h3": h3_cells[:limit],
     }

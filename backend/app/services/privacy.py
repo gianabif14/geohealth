@@ -1,5 +1,5 @@
 import math
-from app.services.geo import haversine_m, is_within_sumsel_bbox
+from app.services.geo import haversine_m, is_within_supported_bbox
 
 ACCURACY_WARNING_THRESHOLD_M = 500.0
 MAX_PLAUSIBLE_SPEED_KMH = 140.0
@@ -14,10 +14,10 @@ def validate_and_cloak_location(
     prev_lon: float | None = None,
     dt_seconds: float | None = None,
 ) -> dict:
-    if not is_within_sumsel_bbox(lat, lon):
+    if not is_within_supported_bbox(lat, lon):
         raise ValueError(
-            "Lokasi berada di luar cakupan wilayah Sumatera Selatan dan Kalimantan. "
-            "Pilih titik pada peta di wilayah Sumatera Selatan atau Kalimantan."
+            "Lokasi berada di luar cakupan wilayah Indonesia. "
+            "Pilih titik pada peta di wilayah Indonesia."
         )
 
     # 3 desimal derajat setara ~111 m di ekuator untuk minimisasi data sesuai UU PDP
@@ -38,7 +38,7 @@ def validate_and_cloak_location(
 
     plausibility_warning = None
     if prev_lat is not None and prev_lon is not None and dt_seconds is not None and dt_seconds > 0:
-        if is_within_sumsel_bbox(prev_lat, prev_lon):
+        if is_within_supported_bbox(prev_lat, prev_lon):
             dist_m = haversine_m(prev_lat, prev_lon, lat, lon)
             speed_kmh = (dist_m / dt_seconds) * 3.6
             if speed_kmh > MAX_PLAUSIBLE_SPEED_KMH:

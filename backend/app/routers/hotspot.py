@@ -1,29 +1,30 @@
+import math
 from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from app.db import query_hotspots, query_kabupaten_geojson
-from app.services.geo import haversine_m
+from app.services.geo import haversine_m, parse_bbox_param
 from app.services.privacy import validate_and_cloak_location
 
 router = APIRouter(prefix="/api", tags=["hotspot"])
+
+
+def _parse_optional_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
+    if not bbox:
+        return None
+    try:
+        return parse_bbox_param(bbox)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/hotspot")
 def get_hotspots_geojson(
     hari: int = Query(default=7, ge=1, le=30),
     bbox: str | None = Query(default=None),
+    limit: int = Query(default=2000, ge=1, le=5000),
 ) -> dict[str, Any]:
-    parsed_bbox = None
-    if bbox:
-        parts = [p.strip() for p in bbox.split(",")]
-        if len(parts) != 4:
-            raise HTTPException(status_code=422, detail="Format bbox tidak valid.")
-        try:
-            vals = tuple(float(x) for x in parts)
-            parsed_bbox = (vals[0], vals[1], vals[2], vals[3])
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail="Nilai bbox bukan angka.") from exc
-
-    rows = query_hotspots(days=hari, bbox=parsed_bbox)
+    parsed_bbox = _parse_optional_bbox(bbox)
+    rows = query_hotspots(days=hari, bbox=parsed_bbox, limit=limit)
     features = [
         {
             "type": "Feature",
@@ -58,7 +59,10 @@ def get_nearby_hotspots(
     q_lat = priv["query_lat"]
     q_lon = priv["query_lon"]
     radius_m = radius_km * 1000.0
-    all_hs = query_hotspots(days=hari)
+    dlat = (radius_km / 111.0) + 0.05
+    dlon = (radius_km / (111.0 * max(0.1, math.cos(math.radians(q_lat))))) + 0.05
+    nearby_bbox = (q_lon - dlon, q_lat - dlat, q_lon + dlon, q_lat + dlat)
+    all_hs = query_hotspots(days=hari, bbox=nearby_bbox)
 
     nearby = []
     for h in all_hs:
@@ -76,5 +80,8 @@ def get_nearby_hotspots(
 
 
 @router.get("/kabupaten")
-def get_kabupaten_layer() -> dict[str, Any]:
-    return query_kabupaten_geojson()
+def get_kabupaten_layer(
+    bbox: str | None = Query(default=None),
+) -> dict[str, Any]:
+    parsed_bbox = _parse_optional_bbox(bbox)
+    return query_kabupaten_geojson(bbox=parsed_bbox)

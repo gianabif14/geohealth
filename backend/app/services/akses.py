@@ -1,4 +1,6 @@
 import h3
+from shapely.geometry import Point
+from shapely.strtree import STRtree
 from app.services.geo import haversine_m
 
 H3_RESOLUTION = 6
@@ -7,6 +9,7 @@ H3_RESOLUTION = 6
 def compute_h3_access_scores(
     hotspots: list[dict],
     ready_faskes: list[dict],
+    limit: int | None = None,
 ) -> list[dict]:
     """
     Hitung skor keterbatasan akses faskes per sel H3 resolusi 6 (~36 km2).
@@ -24,6 +27,13 @@ def compute_h3_access_scores(
         if cell not in cell_kab and hs.get("kabupaten"):
             cell_kab[cell] = hs["kabupaten"]
 
+    # Bangun spatial index sekali agar pencarian faskes terdekat O(log N) pada skala nasional
+    faskes_tree = (
+        STRtree([Point(fk["lon"], fk["lat"]) for fk in ready_faskes])
+        if ready_faskes
+        else None
+    )
+
     raw_cells: list[dict] = []
     for cell, count in cell_counts.items():
         c_lat, c_lon = h3.cell_to_latlng(cell)
@@ -32,11 +42,11 @@ def compute_h3_access_scores(
 
         best_dist_m = 999_999.0
         best_name = None
-        for fk in ready_faskes:
-            d = haversine_m(c_lat, c_lon, fk["lat"], fk["lon"])
-            if d < best_dist_m:
-                best_dist_m = d
-                best_name = fk["nama"]
+        if faskes_tree is not None:
+            nearest_idx = int(faskes_tree.nearest(Point(c_lon, c_lat)))
+            fk = ready_faskes[nearest_idx]
+            best_dist_m = haversine_m(c_lat, c_lon, fk["lat"], fk["lon"])
+            best_name = fk["nama"]
 
         dist_km = round(best_dist_m / 1000.0, 2) if ready_faskes else 100.0
         raw_cells.append(
@@ -69,4 +79,6 @@ def compute_h3_access_scores(
             c["kategori"] = "rendah"
 
     raw_cells.sort(key=lambda x: x["skor"], reverse=True)
+    if limit is not None and limit > 0:
+        return raw_cells[:limit]
     return raw_cells

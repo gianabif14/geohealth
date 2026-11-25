@@ -41,14 +41,33 @@ def azimuth_to_compass(azimuth_deg: float) -> str:
 def is_within_supported_bbox(lat: float, lon: float) -> bool:
     if not (math.isfinite(lat) and math.isfinite(lon)):
         return False
-    in_sumsel = (
+    in_indonesia_bbox = (
         settings.bbox_min_lat <= lat <= settings.bbox_max_lat
         and settings.bbox_min_lon <= lon <= settings.bbox_max_lon
     )
-    # Cakupan Pulau Kalimantan (Kalbar, Kalteng, Kalsel, Kaltim, Kaltara)
-    in_kalimantan = -4.50 <= lat <= 4.50 and 108.50 <= lon <= 119.20
-    return in_sumsel or in_kalimantan
+    if not in_indonesia_bbox:
+        return False
+    # Kecualikan wilayah daratan Singapura yang ikut tercakup di dalam persegi bbox Indonesia
+    in_singapore = 1.22 <= lat <= 1.48 and 103.60 <= lon <= 104.04
+    return not in_singapore
 
 
 def is_within_sumsel_bbox(lat: float, lon: float) -> bool:
+    """Alias kompatibilitas untuk pengecekan cakupan wilayah Indonesia."""
     return is_within_supported_bbox(lat, lon)
+
+
+def parse_bbox_param(bbox: str) -> tuple[float, float, float, float]:
+    """Parse string 'min_lon,min_lat,max_lon,max_lat' menjadi tuple float tervalidasi."""
+    parts = [p.strip() for p in bbox.split(",")]
+    if len(parts) != 4:
+        raise ValueError("Format bbox tidak valid.")
+    try:
+        min_lon, min_lat, max_lon, max_lat = (float(x) for x in parts)
+    except ValueError as exc:
+        raise ValueError("Nilai bbox bukan angka.") from exc
+    if not all(math.isfinite(v) for v in (min_lon, min_lat, max_lon, max_lat)):
+        raise ValueError("Nilai bbox tidak valid.")
+    if min_lon > max_lon or min_lat > max_lat:
+        raise ValueError("Urutan koordinat bbox tidak valid.")
+    return (min_lon, min_lat, max_lon, max_lat)
