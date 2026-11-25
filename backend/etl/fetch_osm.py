@@ -340,13 +340,13 @@ OVERPASS_ENDPOINTS = [
 
 
 REGION_BBOXES: dict[str, list[tuple[float, float, float, float]]] = {
-    "sumsel": [(-4.15, 103.50, -2.00, 105.80)],
-    # Kalimantan dibagi per sub-wilayah agar Overpass merespons cepat tanpa timeout
+    "sumsel": [(-3.55, 104.50, -2.80, 105.05)],
+    # Kalimantan difokuskan per kawasan kota/kabupaten agar Overpass cepat & tidak timeout
     "kalimantan": [
-        (-3.50, 113.50, -1.80, 114.90),  # Kalteng (Palangka Raya, Pulang Pisau, Kapuas)
-        (-0.90, 109.00, 0.25, 110.00),   # Kalbar (Pontianak, Kubu Raya)
-        (-3.70, 114.45, -2.85, 115.45),  # Kalsel (Banjarmasin, Banjarbaru, Banjar)
-        (-1.35, 116.70, -0.30, 117.60),  # Kaltim (Balikpapan, Samarinda, Kukar)
+        (-2.35, 113.80, -2.05, 114.05),  # Palangka Raya (Kalteng)
+        (-0.12, 109.25, 0.05, 109.45),   # Pontianak (Kalbar)
+        (-3.45, 114.50, -3.22, 114.88),  # Banjarmasin & Banjarbaru (Kalsel)
+        (-0.62, 117.05, -0.38, 117.28),  # Samarinda (Kaltim)
     ],
 }
 
@@ -474,8 +474,10 @@ def match_kabupaten_id(
     for kid, _, poly in kabs:
         if poly.contains(pt) or poly.touches(pt):
             return kid
+    # Hanya cocokkan poligon terdekat jika masih dalam toleransi ~0.25 derajat (~28 km),
+    # agar titik di luar cakupan poligon (mis. Kalimantan Barat/Timur) tidak salah dilabeli ke Sumsel.
     best_id = None
-    best_dist = 999.0
+    best_dist = 0.25
     for kid, _, poly in kabs:
         d = poly.distance(pt)
         if d < best_dist:

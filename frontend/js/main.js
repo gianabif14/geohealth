@@ -469,7 +469,7 @@ async function initContextualLayersAndAnalysis() {
   try {
     const [meta, hsGeo, kabGeo, analisis] = await Promise.all([
       fetchMeta(),
-      fetchHotspotsGeoJSON(7),
+      fetchHotspotsGeoJSON(appState.layers.hotspotDays),
       fetchKabupatenGeoJSON(),
       fetchAnalisisAkses(),
     ]);
@@ -512,6 +512,14 @@ window.addEventListener("DOMContentLoaded", () => {
           appState.analysisData.sel_h3,
           isAnalisisTab && appState.layers.showH3
         );
+      }
+    },
+    onHotspotDaysChange: async () => {
+      try {
+        cachedHotspotsGeoJSON = await fetchHotspotsGeoJSON(appState.layers.hotspotDays);
+        renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
+      } catch (_err) {
+        // Ignore transient network error
       }
     },
   });

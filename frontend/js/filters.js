@@ -11,6 +11,7 @@ export function bindFilterControls(state, callbacks) {
   const chkKabupaten = document.getElementById("chk-layer-kabupaten");
   const chkPresisi = document.getElementById("chk-presisi-tinggi");
   const chkH3 = document.getElementById("chk-layer-h3");
+  const selectHotspotHari = document.getElementById("select-hotspot-hari");
   const formFilter = document.getElementById("form-filter");
 
   formFilter.addEventListener("submit", (ev) => {
@@ -77,6 +78,15 @@ export function bindFilterControls(state, callbacks) {
     state.layers.showH3 = chkH3.checked;
     callbacks.onLayerToggle();
   });
+
+  if (selectHotspotHari) {
+    selectHotspotHari.addEventListener("change", () => {
+      state.layers.hotspotDays = Number(selectHotspotHari.value) || 7;
+      if (callbacks.onHotspotDaysChange) {
+        callbacks.onHotspotDaysChange();
+      }
+    });
+  }
 }
 
 export function syncFilterInputsFromState(state) {

@@ -20,6 +20,7 @@ export const appState = {
 
   layers: {
     showHotspot: true,
+    hotspotDays: 7,
     showKabupaten: true,
     showH3: false,
   },

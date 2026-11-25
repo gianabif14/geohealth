@@ -16,39 +16,48 @@ FIRMS_AREAS = [
 ]
 
 
+FIRMS_SOURCES = ["VIIRS_NOAA20_NRT", "MODIS_NRT", "VIIRS_SNPP_NRT"]
+
+
 def _fetch_firms_live() -> tuple[list[dict], bool]:
     if not settings.firms_map_key:
         return [], False
     # NASA FIRMS API area/csv hanya menerima rentang 1..5 hari
     rows: list[dict] = []
     any_ok = False
-    for area_name, bbox in FIRMS_AREAS:
-        url = (
-            f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
-            f"{settings.firms_map_key}/VIIRS_SNPP_NRT/{bbox}/5"
-        )
-        try:
-            resp = httpx.get(url, timeout=20.0)
-            resp.raise_for_status()
-            any_ok = True
-            reader = csv.DictReader(StringIO(resp.text))
-            for r in reader:
-                acq_date = r.get("acq_date", "")
-                acq_time = r.get("acq_time", "0000").zfill(4)
-                dt_str = f"{acq_date}T{acq_time[:2]}:{acq_time[2:]}:00Z"
-                rows.append(
-                    {
-                        "waktu_akuisisi": dt_str,
-                        "lat": float(r["latitude"]),
-                        "lon": float(r["longitude"]),
-                        "confidence": r.get("confidence", "nominal"),
-                        "frp": float(r.get("frp") or 0.0),
-                        "satelit": "VIIRS_SNPP",
-                        "sumber": "firms",
-                    }
-                )
-        except Exception as exc:
-            print(f"Peringatan: gagal mengambil NASA FIRMS {area_name} ({exc}).")
+    for source_name in FIRMS_SOURCES:
+        for area_name, bbox in FIRMS_AREAS:
+            url = (
+                f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+                f"{settings.firms_map_key}/{source_name}/{bbox}/5"
+            )
+            try:
+                resp = httpx.get(url, timeout=20.0)
+                resp.raise_for_status()
+                any_ok = True
+                reader = csv.DictReader(StringIO(resp.text))
+                for r in reader:
+                    acq_date = r.get("acq_date", "")
+                    acq_time = r.get("acq_time", "0000").zfill(4)
+                    dt_str = f"{acq_date}T{acq_time[:2]}:{acq_time[2:]}:00Z"
+                    conf_raw = str(r.get("confidence", "nominal")).strip().lower()
+                    if conf_raw.isdigit():
+                        conf = "high" if int(conf_raw) >= 80 else ("nominal" if int(conf_raw) >= 40 else "low")
+                    else:
+                        conf = conf_raw or "nominal"
+                    rows.append(
+                        {
+                            "waktu_akuisisi": dt_str,
+                            "lat": float(r["latitude"]),
+                            "lon": float(r["longitude"]),
+                            "confidence": conf,
+                            "frp": float(r.get("frp") or 0.0),
+                            "satelit": source_name.replace("_NRT", ""),
+                            "sumber": "firms",
+                        }
+                    )
+            except Exception as exc:
+                print(f"Peringatan: gagal mengambil NASA FIRMS {source_name} {area_name} ({exc}).")
     return rows, any_ok
 
 
@@ -91,8 +100,9 @@ def load_hotspots() -> tuple[int, str]:
 
     if mode == "postgis":
         with get_pg_conn() as conn:
-            if source_used == "sampel":
-                conn.execute("DELETE FROM hotspot WHERE sumber = 'sampel'")
+            conn.execute("DELETE FROM hotspot WHERE sumber = 'sampel'")
+            if source_used == "firms":
+                conn.execute("DELETE FROM hotspot WHERE sumber = 'firms'")
             for r in rows:
                 kid = match_kabupaten_id(r["lat"], r["lon"], kabs)
                 conn.execute(
@@ -114,8 +124,9 @@ def load_hotspots() -> tuple[int, str]:
                 )
     else:
         with get_sqlite_conn() as conn:
-            if source_used == "sampel":
-                conn.execute("DELETE FROM hotspot WHERE sumber = 'sampel'")
+            conn.execute("DELETE FROM hotspot WHERE sumber = 'sampel'")
+            if source_used == "firms":
+                conn.execute("DELETE FROM hotspot WHERE sumber = 'firms'")
             for r in rows:
                 kid = match_kabupaten_id(r["lat"], r["lon"], kabs)
                 conn.execute(

@@ -396,11 +396,12 @@ def query_hotspots(
     days: int = 7,
     bbox: tuple[float, float, float, float] | None = None,
 ) -> list[dict[str, Any]]:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    now_utc = datetime.now(timezone.utc)
+    cutoff = now_utc - timedelta(days=days)
     mode = get_backend_mode()
     if mode == "postgis":
-        clauses = ["h.waktu_akuisisi >= %s"]
-        params: list[Any] = [cutoff]
+        clauses = ["h.waktu_akuisisi >= %s", "h.waktu_akuisisi <= %s"]
+        params: list[Any] = [cutoff, now_utc]
         if bbox:
             min_lon, min_lat, max_lon, max_lat = bbox
             clauses.append("h.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)")
@@ -431,8 +432,8 @@ def query_hotspots(
             for r in rows
         ]
 
-    clauses = ["h.waktu_akuisisi >= ?"]
-    params = [cutoff.isoformat()]
+    clauses = ["1=1"]
+    params = []
     if bbox:
         min_lon, min_lat, max_lon, max_lat = bbox
         clauses.append("h.lon BETWEEN ? AND ? AND h.lat BETWEEN ? AND ?")
@@ -447,6 +448,17 @@ def query_hotspots(
     """
     with get_sqlite_conn() as conn:
         rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
+    filtered = []
+    for r in rows:
+        raw_dt = str(r["waktu_akuisisi"]).replace("Z", "+00:00")
+        try:
+            dt = datetime.fromisoformat(raw_dt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            if cutoff <= dt <= now_utc:
+                filtered.append(r)
+        except ValueError:
+            continue
     return [
         {
             "id": int(r["id"]),
@@ -459,7 +471,7 @@ def query_hotspots(
             "lat": round(float(r["lat"]), 5),
             "lon": round(float(r["lon"]), 5),
         }
-        for r in rows
+        for r in filtered
     ]
 
 

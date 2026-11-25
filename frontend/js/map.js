@@ -229,9 +229,10 @@ export function renderHotspotsLayer(geojson, visible = true) {
       fillColor: "#B83A14",
       fillOpacity: 0.88,
     });
+    const regionFallback = lon >= 108.0 ? "Kalimantan" : "Sumatera Selatan";
     marker.bindPopup(
       `<strong>Titik Panas Satelit (${escapeHtml(p.satelit)})</strong><br>` +
-      `Wilayah: ${escapeHtml(p.kabupaten || "Sumatera Selatan")}<br>` +
+      `Wilayah: ${escapeHtml(p.kabupaten || regionFallback)}<br>` +
       `Confidence: ${escapeHtml(p.confidence)} | FRP: ${p.frp} MW<br>` +
       `Waktu akuisisi: ${escapeHtml(new Date(p.waktu_akuisisi).toLocaleString("id-ID"))}<br>` +
       `<em>Sumber: Data ${escapeHtml(p.sumber)} (indikator termal kontekstual)</em>`
