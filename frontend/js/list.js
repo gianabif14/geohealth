@@ -20,10 +20,6 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
 
     const distKm = f.jarak_m !== null && f.jarak_m !== undefined ? (f.jarak_m / 1000).toFixed(2) : "-";
     const st = f.status;
-    const dtStr = new Date(st.diperbarui_pada).toLocaleString("id-ID", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
 
     const rankText = idx === 0
       ? "TERDEKAT #1 (Kandidat Rujukan Utama)"
@@ -62,11 +58,6 @@ export function renderFacilityList(facilities, selectedId, onSelectFacility, onR
         <span class="srv-tag ${st.tempat_tidur_tersedia > 0 ? "ready" : "unavailable"}">
           Tempat Tidur: ${st.tempat_tidur_tersedia} / ${st.tempat_tidur_total}
         </span>
-      </div>
-
-      <div class="source-stamp">
-        <span>Status layanan: <strong>Data ${escapeHtml(st.sumber)}</strong> (${escapeHtml(dtStr)})</span>
-        <span>Lokasi: <strong>${escapeHtml(f.sumber.toUpperCase())}</strong></span>
       </div>
     `;
 
