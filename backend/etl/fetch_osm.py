@@ -399,20 +399,17 @@ REGION_BBOXES: dict[str, list[tuple[float, float, float, float]]] = {
 }
 
 
-def _fetch_overpass_bbox(bbox: tuple[float, float, float, float], timeout_s: float = 15.0) -> list[dict[str, Any]]:
+def _fetch_overpass_bbox(bbox: tuple[float, float, float, float], timeout_s: float = 45.0) -> list[dict[str, Any]]:
     s, w, n, e = bbox
     query = f"""
-    [out:json][timeout:15];
+    [out:json][timeout:45];
     (
-      node["amenity"="hospital"]({s},{w},{n},{e});
-      way["amenity"="hospital"]({s},{w},{n},{e});
-      node["amenity"="clinic"]({s},{w},{n},{e});
-      way["amenity"="clinic"]({s},{w},{n},{e});
-      node["amenity"="doctors"]({s},{w},{n},{e});
-      node["healthcare"="centre"]({s},{w},{n},{e});
-      way["healthcare"="centre"]({s},{w},{n},{e});
+      nwr["amenity"="hospital"]({s},{w},{n},{e});
+      nwr["amenity"="clinic"]({s},{w},{n},{e});
+      nwr["amenity"="doctors"]({s},{w},{n},{e});
+      nwr["healthcare"="centre"]({s},{w},{n},{e});
     );
-    out center 200;
+    out center 250;
     """
     elements = []
     for endpoint in OVERPASS_ENDPOINTS:

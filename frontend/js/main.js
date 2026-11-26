@@ -96,7 +96,7 @@ function refreshDisplayedListAndMarkers() {
   document.getElementById("badge-count-faskes").textContent = String(list.length);
 
   renderFacilitiesOnMap(
-    list,
+    appState.layers.showFaskes ? list : [],
     appState.selectedFacilityId,
     handleSelectFacility,
     handleOpenRoute
@@ -597,6 +597,12 @@ window.addEventListener("DOMContentLoaded", () => {
     onLocalSearchChange: () => refreshDisplayedListAndMarkers(),
     onLayerToggle: () => {
       renderHotspotsLayer(cachedHotspotsGeoJSON, appState.layers.showHotspot);
+      renderFacilitiesOnMap(
+        appState.layers.showFaskes ? getFilteredFacilitiesForDisplay() : [],
+        appState.selectedFacilityId,
+        handleSelectFacility,
+        handleOpenRoute
+      );
       const viewport = getMapViewport();
       renderKabupatenLayer(
         cachedKabupatenGeoJSON,

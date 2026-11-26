@@ -10,7 +10,7 @@ export async function fetchNearestFaskes(state) {
   params.set("lon", String(state.userLon));
   params.set("radius_km", String(state.filters.radiusKm));
   params.set("k", "40");
-  params.set("exact", state.filters.exactCoords ? "true" : "false");
+  params.set("exact", "false");
 
   if (state.accuracyM !== null) {
     params.set("accuracy", String(Math.round(state.accuracyM)));

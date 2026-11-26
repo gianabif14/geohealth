@@ -9,7 +9,7 @@ export function bindFilterControls(state, callbacks) {
   const chkTt = document.getElementById("chk-tt");
   const chkHotspot = document.getElementById("chk-layer-hotspot");
   const chkKabupaten = document.getElementById("chk-layer-kabupaten");
-  const chkPresisi = document.getElementById("chk-presisi-tinggi");
+  const chkFaskes = document.getElementById("chk-layer-faskes");
   const chkH3 = document.getElementById("chk-layer-h3");
   const selectHotspotHari = document.getElementById("select-hotspot-hari");
   const formFilter = document.getElementById("form-filter");
@@ -59,10 +59,12 @@ export function bindFilterControls(state, callbacks) {
     callbacks.onFilterChange();
   });
 
-  chkPresisi.addEventListener("change", () => {
-    state.filters.exactCoords = chkPresisi.checked;
-    callbacks.onFilterChange();
-  });
+  if (chkFaskes) {
+    chkFaskes.addEventListener("change", () => {
+      state.layers.showFaskes = chkFaskes.checked;
+      callbacks.onLayerToggle();
+    });
+  }
 
   chkHotspot.addEventListener("change", () => {
     state.layers.showHotspot = chkHotspot.checked;
@@ -98,5 +100,6 @@ export function syncFilterInputsFromState(state) {
   document.getElementById("chk-igd").checked = state.filters.igd24;
   document.getElementById("chk-dokter").checked = state.filters.dokter;
   document.getElementById("chk-tt").checked = state.filters.ttMin > 0;
-  document.getElementById("chk-presisi-tinggi").checked = state.filters.exactCoords;
+  const chkFaskesEl = document.getElementById("chk-layer-faskes");
+  if (chkFaskesEl) chkFaskesEl.checked = state.layers.showFaskes;
 }

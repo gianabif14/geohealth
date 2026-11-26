@@ -15,13 +15,13 @@ export const appState = {
     igd24: false,
     dokter: false,
     ttMin: 0,
-    exactCoords: false,
   },
 
   layers: {
     showHotspot: true,
     hotspotDays: 7,
     showKabupaten: true,
+    showFaskes: true,
     showH3: false,
   },
 
